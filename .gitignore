@@ -1,5 +1,10 @@
 build/*
+lib/*
 setup
+rm_test
+pf_test1
+pf_test2
+pf_test3
 *~
 *.o
 *.d

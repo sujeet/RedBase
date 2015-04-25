@@ -26,15 +26,18 @@ typedef int SlotNum;
 // RID: Record id interface
 //
 class RID {
+  friend class RM_FileHandle;
+  friend class RM_FileScan;
 public:
     RID();                                         // Default constructor
     RID(PageNum pageNum, SlotNum slotNum);
-    ~RID();                                        // Destructor
 
     RC GetPageNum(PageNum &pageNum) const;         // Return page number
     RC GetSlotNum(SlotNum &slotNum) const;         // Return slot number
 
 private:
+  PageNum page_num;
+  SlotNum slot_num;
 };
 
 #endif

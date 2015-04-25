@@ -1,0 +1,41 @@
+Name:  Sujeet Gholap
+Email: sujeet@cs.stanford.edu
+
+
+Overall design
+--------------
+- As less new error codes as possible.
+  Whereever possible, use PF error codes as long as
+  they make sense.
+- As less malloc-free / new-delete as possible.
+  Wherever possible, objects are allocated on the stack.
+
+
+Key Data Structures
+-------------------
+- RM_Page and free list
+  RM_Page is laid out in memory as following
+
+  | next_free_page_number |
+  | number_of_records     |
+  | b0 ....           b32 | \
+  | b33 ....          b64 | bitmap
+  |          ...          | /
+  |  records              |
+
+- Bitmap
+  A bitmap is defined in bitmap.h and implemented in bitmap.cc
+
+
+Testing
+-------
+- Set up gtest framework for unit tsting
+- tests in /test directory
+- Tested with tests found in the common-tests class
+  directory too.
+
+
+Known Bugs
+----------
+- Segmentation fault on rm_testkpg
+  still debugging! :(
