@@ -33,7 +33,7 @@ STATS_OPTION   = -DPF_STATS
 #
 PF_SOURCES     = pf_buffermgr.cc pf_error.cc pf_filehandle.cc \
                  pf_pagehandle.cc pf_hashtable.cc pf_manager.cc \
-                 pf_statistics.cc statistics.cc
+                 pf_statistics.cc statistics.cc PF.cc
 RM_SOURCES     = rm_error.cc rm_rid.cc rm_filehandle.cc rm_manager.cc \
                  rm_filescan.cc rm_record.cc rm_page.cc bitmap.cc
 IX_SOURCES     =

@@ -35,7 +35,7 @@ CXX = g++
 GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
                 $(GTEST_DIR)/include/gtest/internal/*.h
 
-TESTS = bitmap
+TESTS = bitmap Array
 TEST_OBJECTS = $(patsubst %,%_test.o,$(TESTS))
 TEST_CLASSES = $(patsubst %,%.o,$(TESTS))
 
