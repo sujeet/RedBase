@@ -45,6 +45,7 @@ LIBS = $(LIB_DIR)/libix.a $(LIB_DIR)/libpf.a $(LIB_DIR)/librm.a
 
 all: tests
 	./tests
+	# ./tests --gtest_filter=IX_Manager.InequalityScans
 
 tests: $(TEST_OBJECTS) $(TEST_CLASSES) gtest_main.a $(LIBS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@

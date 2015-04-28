@@ -414,6 +414,59 @@ TEST (IX_Manager, DeleteHalfWhileScanningSingleKey)
   remove ("test.1");
 }
 
+TEST (IX_Manager, InequalityScans)
+{
+  remove ("test.1");
+  int key_count = 200;
+
+  MGR();
+  mgr.CreateIndex ("test", 1, INT, 4);
+  IX::IndexHandle handle = mgr.OpenIndex ("test", 1);
+
+  // Insert records.
+  for (int key = 0; key < key_count; ++key) {
+    RID rid (1, key);
+    handle.Insert ((void*)&key, rid);
+  }
+
+  RID rid;
+  int counter;
+  int key = 100;
+
+  // everything != 100
+  auto scan = new IX::Scan (handle, NE_OP, (void*)&key);
+  counter = 0;
+  while ((rid = scan->next()) != IX::Scan::end) {
+    counter++;
+    EXPECT_NE (rid.slot_num, key);
+  }
+  EXPECT_EQ (counter, 199);
+  delete scan;
+
+  // everything < 100 (there should be 100)
+  scan = new IX::Scan (handle, LT_OP, (void*)&key);
+  counter = 0;
+  while ((rid = scan->next()) != IX::Scan::end) {
+    counter++;
+    EXPECT_LT (rid.slot_num, key);
+  }
+  EXPECT_EQ (counter, 100);
+  delete scan;
+
+  // everything > 100 (there should be 99)
+  scan = new IX::Scan (handle, GT_OP, (void*)&key);
+  counter = 0;
+  while ((rid = scan->next()) != IX::Scan::end) {
+    counter++;
+    EXPECT_GT (rid.slot_num, key);
+  }
+  EXPECT_EQ (counter, 99);
+  delete scan;
+
+  CLOSE ();
+  remove ("test.1");
+}
+
 TEST (IX_Manager, DeleteAllMultiKey)
 {
   remove ("test.1");
@@ -525,6 +578,43 @@ TEST (IX_Manager, SingleStringKeyManyRecords)
   }
 
   key [0] = 'z';
+  IX::Scan scan (handle, LE_OP, (void*)key);
+  RID rid;
+  int counter = 0;
+  while ((rid = scan.next()) != IX::Scan::end) {
+    EXPECT_EQ (rid.slot_num, counter++);
+  }
+  EXPECT_EQ (counter, key_count);
+
+  delete[] key;
+  CLOSE ();
+  remove ("test.1");
+}
+
+TEST (IX_Manager, LargeStringKey)
+{
+  // Use 1000 byte strings as keys
+  // This way, only two fit in a node
+  int key_count = 2000;
+  int key_size = 255;
+
+  remove ("test.1");
+
+  MGR();
+  mgr.CreateIndex ("test", 1, STRING, key_size);
+  IX::IndexHandle handle = mgr.OpenIndex ("test", 1);
+
+  char *key = new char [key_size];
+  for (int i = 0; i < key_size; ++i) key [i] = 'a';
+
+  for (int i = 0; i < key_count; ++i) {
+    RID rid (1, i);
+    key [0] = i % 199;
+    key [1] = i / 199;
+    handle.Insert ((void*)&key, rid);
+  }
+
+  key [0] = 200;
   IX::Scan scan (handle, LE_OP, (void*)key);
   RID rid;
   int counter = 0;

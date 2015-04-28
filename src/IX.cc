@@ -598,12 +598,12 @@ bool Scan::satisfy (const ArrayElem& key)
 {
   switch (this->compOp) {
     case NO_OP: return true;
-    case EQ_OP: return this->key == key;
-    case LT_OP: return this->key < key;
-    case GT_OP: return this->key > key;
-    case LE_OP: return this->key <= key;
-    case GE_OP: return this->key >= key;
-    case NE_OP: return this->key != key;
+    case EQ_OP: return key == this->key;
+    case LT_OP: return key < this->key;
+    case GT_OP: return key > this->key;
+    case LE_OP: return key <= this->key;
+    case GE_OP: return key >= this->key;
+    case NE_OP: return key != this->key;
   }
   return true;
 }
