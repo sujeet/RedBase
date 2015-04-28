@@ -17,12 +17,14 @@ class IndexHandle {
 
 private:
   PF::FileHandle index_file;
+  bool uninitialized;
 
   IndexHandle (PF::FileHandle& index_file);
   PF::PageHandle GetRoot () const;
   PF::PageHandle GetFirstLeaf () const;
 
 public:
+  IndexHandle (): uninitialized (true) {}
   IndexHandle (const IndexHandle& other);
   void Insert (void *data, const RID &rid);
   void Delete (void *data, const RID &rid);
@@ -196,6 +198,8 @@ namespace error
 DECLARE_EXCEPTION (BadArguments, "Bad arguments.");
 DECLARE_EXCEPTION (DuplicateRID, "Tried to insert a duplicate entry.");
 DECLARE_EXCEPTION (RIDNoExist, "Tried to delete a non-existent entry.");
+DECLARE_EXCEPTION (UninitializedIndexHandle,
+                   "Tried to do operations on uninitialized IndexHandle");
 }      // namespace error
 
 }      // namespace IX

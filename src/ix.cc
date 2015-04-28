@@ -1,6 +1,7 @@
 #include "ix.h"
 #include "IX.h"
 #include <cassert>
+#include <iostream>
 
 using namespace std;
 
@@ -9,29 +10,30 @@ using namespace std;
     (expr);                                     \
   }                                             \
   catch (exception& e) {                        \
+    cout << e.what () << endl;                  \
     return -1;                                  \
   }                                             \
   return 0;
 
+IX_IndexHandle::IX_IndexHandle() {}
+IX_IndexHandle::~IX_IndexHandle() {}
+
 // Insert a new index entry
 RC IX_IndexHandle::InsertEntry(void *pData, const RID &rid)
 {
-  assert (this->handle);
-  ERROR_WRAPPER (this->handle->Insert (pData, rid));
+  ERROR_WRAPPER (this->handle.Insert (pData, rid));
 }
 
 // Delete a new index entry
 RC IX_IndexHandle::DeleteEntry(void *pData, const RID &rid)
 {
-  assert (this->handle);
-  ERROR_WRAPPER (this->handle->Delete (pData, rid));
+  ERROR_WRAPPER (this->handle.Delete (pData, rid));
 }
 
 // Force index files to disk
 RC IX_IndexHandle::ForcePages()
 {
-  assert (this->handle);
-  ERROR_WRAPPER (this->handle->ForcePages ());
+  ERROR_WRAPPER (this->handle.ForcePages ());
 }
 
 RC IX_IndexScan::OpenScan(const IX_IndexHandle &indexHandle,
@@ -40,8 +42,7 @@ RC IX_IndexScan::OpenScan(const IX_IndexHandle &indexHandle,
                           ClientHint  pinHint)
 {
   if (pinHint != pinHint) return 1; // To get rid of unused compiler warning
-  if (indexHandle.handle == NULL) return -1;
-  ERROR_WRAPPER (this->scan = new IX::Scan (*indexHandle.handle, compOp, value));
+  ERROR_WRAPPER (this->scan = new IX::Scan (indexHandle.handle, compOp, value));
 }
 
 
@@ -52,6 +53,7 @@ RC IX_IndexScan::GetNextEntry(RID &rid)
     if (rid == this->scan->end) return IX_EOF;
   }
   catch (exception& e) {
+    cout << e.what () << endl;
     return -1;
   }
   return 0;
@@ -89,7 +91,7 @@ RC IX_Manager::OpenIndex(const char *fileName, int indexNo,
                          IX_IndexHandle &indexHandle)
 {
   ERROR_WRAPPER (
-    indexHandle.handle = new IX::IndexHandle (
+    new (&indexHandle.handle) IX::IndexHandle (
       this->manager->OpenIndex (fileName, indexNo)
     )
   );
@@ -98,8 +100,7 @@ RC IX_Manager::OpenIndex(const char *fileName, int indexNo,
 
 RC IX_Manager::CloseIndex(IX_IndexHandle &indexHandle)
 {
-  if (indexHandle.handle == NULL) return -1;
-  ERROR_WRAPPER (this->manager->CloseIndex (*indexHandle.handle));
+  ERROR_WRAPPER (this->manager->CloseIndex (indexHandle.handle));
 }
 
 

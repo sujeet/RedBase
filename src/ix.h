@@ -25,12 +25,11 @@ class IX_IndexHandle {
   friend class IX_Manager;
 
 private:
-  IX::IndexHandle* handle;
+  IX::IndexHandle handle;
 
 public:
-  IX_IndexHandle(): handle(NULL) {};
-  
-  ~IX_IndexHandle() {};
+  IX_IndexHandle();
+  ~IX_IndexHandle();
 
   // Insert a new index entry
   RC InsertEntry(void *pData, const RID &rid);

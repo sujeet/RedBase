@@ -72,14 +72,16 @@ IndexHandle Manager::OpenIndex (const char *fileName, int indexNo)
 
 void Manager::CloseIndex (IndexHandle& indexHandle)
 {
+  if (indexHandle.uninitialized) throw error::UninitializedIndexHandle ();
+
   this->pfm.CloseFile (indexHandle.index_file);
 }
 
 IndexHandle::IndexHandle (PF::FileHandle& index_file)
-  : index_file (index_file) {}
+  : index_file (index_file), uninitialized (false) {}
 
 IndexHandle::IndexHandle (const IndexHandle& other)
-  : index_file (other.index_file){}
+  : index_file (other.index_file), uninitialized (false) {}
 
 PF::PageHandle IndexHandle::GetRoot () const
 {
@@ -109,6 +111,8 @@ PF::PageHandle IndexHandle::GetFirstLeaf () const
 
 void IndexHandle::Insert (void *data, const RID& rid)
 {
+  if (this->uninitialized) throw error::UninitializedIndexHandle ();
+
   PF::PageHandle root_page = this->GetRoot ();
   TreePage root (root_page.GetData ());
 
@@ -149,6 +153,8 @@ void IndexHandle::Insert (void *data, const RID& rid)
 
 void IndexHandle::Delete (void *data, const RID& rid)
 {
+  if (this->uninitialized) throw error::UninitializedIndexHandle ();
+
   PF::PageHandle root_page = this->GetRoot ();
   TreePage root (root_page.GetData ());
   ArrayElem key (root.hdr->key_type,
@@ -166,6 +172,8 @@ void IndexHandle::Delete (void *data, const RID& rid)
 
 void IndexHandle::ForcePages () const
 {
+  if (this->uninitialized) throw error::UninitializedIndexHandle ();
+
   this->index_file.ForcePages ();
 }
 
@@ -560,6 +568,8 @@ Scan::Scan (const IndexHandle& indexHandle,
             CompOp compOp,
             void* value)
 {
+  if (indexHandle.uninitialized) throw error::UninitializedIndexHandle ();
+
   PF::PageHandle leaf_page = indexHandle.GetFirstLeaf ();
   TreePage leaf (leaf_page);
 
