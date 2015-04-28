@@ -21,6 +21,8 @@
 #define yywrap() 1
 void yyerror(const char *);
 
+#include <iostream>
+
 //
 // Return codes
 //
@@ -61,7 +63,7 @@ enum AttrType {
     INT,
     FLOAT,
     STRING,
-    PAGE_NUMBER
+    NONE
 };
 
 //

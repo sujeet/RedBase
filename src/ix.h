@@ -12,68 +12,80 @@
 #include "redbase.h"  // Please don't change these lines
 #include "rm_rid.h"  // Please don't change these lines
 #include "pf.h"
+#include "IX.h"
+#include "Array.h"
+
+#define IX_EOF 1
 
 //
 // IX_IndexHandle: IX Index File interface
 //
 class IX_IndexHandle {
+  friend class IX_IndexScan;
+  friend class IX_Manager;
+
+private:
+  IX::IndexHandle* handle;
+
 public:
-    IX_IndexHandle();
-    ~IX_IndexHandle();
+  IX_IndexHandle(): handle(NULL) {};
+  
+  ~IX_IndexHandle() {};
 
-    // Insert a new index entry
-    RC InsertEntry(void *pData, const RID &rid);
+  // Insert a new index entry
+  RC InsertEntry(void *pData, const RID &rid);
 
-    // Delete a new index entry
-    RC DeleteEntry(void *pData, const RID &rid);
+  // Delete a new index entry
+  RC DeleteEntry(void *pData, const RID &rid);
 
-    // Force index files to disk
-    RC ForcePages();
+  // Force index files to disk
+  RC ForcePages();
 };
 
 //
 // IX_IndexScan: condition-based scan of index entries
 //
 class IX_IndexScan {
+private:
+  IX::Scan* scan;
 public:
-    IX_IndexScan();
-    ~IX_IndexScan();
+  // Open index scan
+  RC OpenScan(const IX_IndexHandle &indexHandle,
+              CompOp compOp,
+              void *value,
+              ClientHint  pinHint = NO_HINT);
 
-    // Open index scan
-    RC OpenScan(const IX_IndexHandle &indexHandle,
-                CompOp compOp,
-                void *value,
-                ClientHint  pinHint = NO_HINT);
+  // Get the next matching entry return IX_EOF if no more matching
+  // entries.
+  RC GetNextEntry(RID &rid);
 
-    // Get the next matching entry return IX_EOF if no more matching
-    // entries.
-    RC GetNextEntry(RID &rid);
-
-    // Close index scan
-    RC CloseScan();
+  // Close index scan
+  RC CloseScan();
 };
 
 //
 // IX_Manager: provides IX index file management
 //
 class IX_Manager {
+private:
+  IX::Manager* manager;
 public:
-    IX_Manager(PF_Manager &pfm);
-    ~IX_Manager();
+  IX_Manager(PF_Manager &pfm);
+  ~IX_Manager();
 
-    // Create a new Index
-    RC CreateIndex(const char *fileName, int indexNo,
-                   AttrType attrType, int attrLength);
+  // Create a new Index
+  RC CreateIndex(const char *fileName, int indexNo,
+                 AttrType attrType, int attrLength);
 
-    // Destroy and Index
-    RC DestroyIndex(const char *fileName, int indexNo);
+  // Destroy and Index
+  RC DestroyIndex(const char *fileName, int indexNo);
 
-    // Open an Index
-    RC OpenIndex(const char *fileName, int indexNo,
-                 IX_IndexHandle &indexHandle);
+  // Open an Index
+  RC OpenIndex(const char *fileName, int indexNo,
+               IX_IndexHandle &indexHandle);
 
-    // Close an Index
-    RC CloseIndex(IX_IndexHandle &indexHandle);
+  // Close an Index
+  RC CloseIndex(IX_IndexHandle &indexHandle);
 };
 
 //

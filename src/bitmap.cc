@@ -1,7 +1,11 @@
 #include "bitmap.h"
 
 #include <cstdio>
+#include <cstring>
 #include <cassert>
+#include <iostream>
+
+using namespace std;
 
 int Bitmap::num_bytes() const
 {
@@ -10,15 +14,21 @@ int Bitmap::num_bytes() const
 
 int Bitmap::num_bits() const
 {
-  return this->_num_bits;
+  return this->num_bytes() * 8;
 }
 
-Bitmap::Bitmap(const int _num_bits, unsigned char *map):
-  _num_bits(_num_bits), map(map){}
+Bitmap::Bitmap()
+  : _num_bits(0), map(NULL) {}
+
+Bitmap::Bitmap(const int _num_bits, unsigned char *map)
+  : _num_bits(_num_bits), map(map){}
+
+Bitmap::Bitmap(const int _num_bits, char *map)
+  : _num_bits(_num_bits), map((unsigned char*)map){}
 
 bool Bitmap::get(const int bit_index) const
 {
-  assert (bit_index < this->_num_bits);
+  assert (bit_index < this->num_bits());
 
   int byte_i = bit_index / 8;
   int bit_i = bit_index % 8;
@@ -27,16 +37,23 @@ bool Bitmap::get(const int bit_index) const
 
 void Bitmap::set(const int bit_index)
 {
-  assert (bit_index < this->_num_bits);
+  if (bit_index >= this->num_bits())
+  cout << "index : " << bit_index << "\nnum bits : " << this->num_bits() << endl;
+  assert (bit_index < this->num_bits());
 
   int byte_i = bit_index / 8;
   int bit_i = bit_index % 8;
   this->map[byte_i] |= (1 << bit_i);
 }
 
+void Bitmap::clear_all ()
+{
+  memset (this->map, 0, this->num_bytes ());
+}
+
 void Bitmap::clear(const int bit_index)
 {
-  assert (bit_index < this->_num_bits);
+  assert (bit_index < this->num_bits());
 
   int byte_i = bit_index / 8;
   int bit_i = bit_index % 8;

@@ -3,25 +3,95 @@
 
 #include "gtest/gtest.h"
 
+#include <iostream>
+
+using namespace std;
+
 TEST (Array, init)
 {
-  const char* stack_strings = "ab" "bc" "ab" "aa" "__";
-  char* strings = new char[10];
-  for (int i = 0; i < 10; ++i) strings[i] = stack_strings[i];
+  int a [] = {1, 2, 3, -1};
   
-  Array array (strings, 2, 4, STRING);
+  Array array ((char*)a, 4, 3, INT, 4); // 1, 2, 3
 
-  EXPECT_TRUE (array[0] < array[1]);
-  EXPECT_TRUE (array[0] > array[3]);
-  EXPECT_TRUE (array[0] == array[2]);
 
-  array.set (0, "aa");
-  EXPECT_TRUE (array[0] == array[3]);
+  EXPECT_TRUE (array[0] == 1);
+  EXPECT_TRUE (array[1] == 2);
+  EXPECT_TRUE (array[2] == 3);
 
-  array.insert (2, "bc");
-  EXPECT_TRUE (array[1] == array[2]);
-  EXPECT_TRUE (array[0] != array[3]);
-  EXPECT_TRUE (array[0] == array[4]);
+  array[2] = 9;                 //  1, 2, 9
+  EXPECT_TRUE (array[0] == 1);
+  EXPECT_TRUE (array[1] == 2);
+  EXPECT_TRUE (array[2] == 9);
+  EXPECT_TRUE (array[2] != 3);
 
-  delete strings;
+  array.insert (1, 10);          // 1, 10, 2, 9
+  EXPECT_TRUE (array[0] == 1);
+  EXPECT_TRUE (array[1] == 10);
+  EXPECT_TRUE (array[2] == 2);
+  EXPECT_TRUE (array[3] == 9);
+}
+
+TEST (Array, comparisons)
+{
+  int a[] = {0};
+  Array array ((char*)a, 4, 1, INT, 1);
+  
+  array[0] = -1;
+  EXPECT_TRUE (array[0] < 0);
+  EXPECT_TRUE (array[0] <= 0);
+  EXPECT_TRUE (array[0] != 0);
+
+  EXPECT_FALSE (array[0] >= 0);
+  EXPECT_FALSE (array[0] > 0);
+  EXPECT_FALSE (array[0] == 0);
+
+  array[0] = 1;
+  EXPECT_TRUE (array[0] > 0);
+  EXPECT_TRUE (array[0] >= 0);
+  EXPECT_TRUE (array[0] != 0);
+
+  EXPECT_FALSE (array[0] <= 0);
+  EXPECT_FALSE (array[0] < 0);
+  EXPECT_FALSE (array[0] == 0);
+
+  array[0] = 0;
+  EXPECT_TRUE (array[0] >= 0);
+  EXPECT_TRUE (array[0] <= 0);
+  EXPECT_TRUE (array[0] == 0);
+
+  EXPECT_FALSE (array[0] < 0);
+  EXPECT_FALSE (array[0] > 0);
+  EXPECT_FALSE (array[0] != 0);
+}
+
+TEST (Array, insert_last)
+{
+  int a [] = {-1, -1};
+  
+  Array array ((char*)a, 4, 0, INT, 2);
+  EXPECT_TRUE (array.len() == 0);
+
+  array.insert (0, 1);
+  EXPECT_TRUE (array.len() == 1);
+  EXPECT_TRUE (array[0] == 1);
+
+  array.insert (1, 99);
+  EXPECT_TRUE (array.len() == 2);
+  EXPECT_TRUE (array[0] == 1);
+  EXPECT_TRUE (array[1] == 99);
+}
+
+TEST (Array, pop)
+{
+  int a [] = {99, 999};
+  
+  Array array ((char*)a, 4, 2, INT, 2);
+
+  EXPECT_TRUE (array.len() == 2);
+
+  EXPECT_TRUE (array.pop() == 999);
+  EXPECT_TRUE (array.len() == 1);
+
+  EXPECT_TRUE (array.pop() == 99);
+  EXPECT_TRUE (array.len() == 0);
 }

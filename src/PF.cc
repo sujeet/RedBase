@@ -1,4 +1,4 @@
-#include "PF.hpp"
+#include "PF.h"
 
 #define HANDLE_ERROR(stmt)   \
   int rc = (stmt);           \
@@ -13,7 +13,7 @@
   case PF_CLOSEDFILE      : throw FileClosed (); break;            \
   case PF_PAGEFREE        : throw PageAlreadyFree (); break;       \
   case PF_PAGEUNPINNED    : throw PageAlreadyPinned (); break;     \
-  case PF_EOF             : throw EOF (); break;                   \
+  case PF_EOF             : throw Eof (); break;                   \
   case PF_TOOSMALL        : throw BufferTooSmall (); break;        \
                                                                    \
   case PF_NOMEM           : throw NoMemory (); break;              \
@@ -27,6 +27,8 @@
   case PF_HASHNOTFOUND    : throw HashNotFound (); break;          \
   case PF_HASHPAGEEXIST   : throw HashPageExists (); break;        \
   case PF_INVALIDNAME     : throw InvalidFilename (); break;       \
+  case PF_UNIX            : throw SystemError (); break;           \
+  default                 : throw exception ();                    \
   }
 
 namespace PF
@@ -34,15 +36,7 @@ namespace PF
 
 using namespace error;
 
-Manager::Manager () 
-{
-  this->manager = new PF_Manager ();
-}
-
-Manager::~Manager () 
-{
-  delete this->manager;
-}
+Manager::Manager (PF_Manager& mgr) : manager (&mgr) {}
 
 void Manager::CreateFile (const char *fileName) 
 {
@@ -59,6 +53,21 @@ FileHandle Manager::OpenFile (const char *fileName)
   FileHandle filehandle;
   HANDLE_ERROR (this->manager->OpenFile (fileName, *filehandle.filehandle));
   return filehandle;
+}
+
+void Manager::CreateFile (const std::string& fileName) 
+{
+  this->CreateFile (fileName.c_str ());
+}
+
+void Manager::DestroyFile (const std::string& fileName)
+{
+  this->DestroyFile (fileName.c_str ());
+}
+
+FileHandle Manager::OpenFile (const std::string& fileName)
+{
+  return this->OpenFile (fileName.c_str ());
 }
 
 void Manager::CloseFile (FileHandle &filehandle)
@@ -147,6 +156,17 @@ void FileHandle::MarkDirty (PageNum pageNum) const
 void FileHandle::UnpinPage (PageNum pageNum) const
 {
   HANDLE_ERROR (this->filehandle->UnpinPage (pageNum));
+}
+
+void FileHandle::UnpinPage (const PageHandle& page) const
+{
+  this->UnpinPage (page.GetPageNum ());
+}
+
+void FileHandle::DoneWritingTo (const PageHandle& page) const
+{
+  this->MarkDirty (page.GetPageNum ());
+  this->UnpinPage (page.GetPageNum ());
 }
 
 void FileHandle::ForcePages (PageNum pageNum) const

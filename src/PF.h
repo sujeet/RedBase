@@ -1,7 +1,11 @@
 #ifndef __PF_HPP
 #define __PF_HPP
 
+#include <cstdio>
 #include <exception>
+#include <string>
+#include <cstring>
+#include <cerrno>
 
 #include "pf.h"
 
@@ -26,11 +30,17 @@ class Manager
 private:
   PF_Manager* manager;
 public:
-  Manager ();
-  ~Manager ();
+  Manager (PF_Manager& mgr);
+  ~Manager () {};
+
   void CreateFile (const char *fileName);
   void DestroyFile (const char *fileName);
   FileHandle OpenFile (const char *fileName);  
+
+  void CreateFile (const std::string& fileName);
+  void DestroyFile (const std::string& fileName);
+  FileHandle OpenFile (const std::string& fileName);
+
   void CloseFile (FileHandle &fileHandle);
 };
 
@@ -56,6 +66,8 @@ public:
   void DisposePage (PageNum pageNum);
   void MarkDirty (PageNum pageNum) const;
   void UnpinPage (PageNum pageNum) const;
+  void UnpinPage (const PageHandle& page) const;
+  void DoneWritingTo (const PageHandle& page) const;
   void ForcePages (PageNum pageNum = ALL_PAGES) const;
 };
 
@@ -86,6 +98,13 @@ class name: public exception               \
   
 namespace error
 {
+class SystemError: public exception
+{
+  virtual const char* what() const throw()
+    {
+      return strerror (errno);
+    }
+};
 DECLARE_EXCEPTION (PagePinned, "Page pinned in buffer.");
 DECLARE_EXCEPTION (PageNotInBuffer, "Page is not in the buffer.");
 DECLARE_EXCEPTION (InvalidPageNumber, "Invalid page number.");
@@ -93,7 +112,7 @@ DECLARE_EXCEPTION (FileOpen, "File is open.");
 DECLARE_EXCEPTION (FileClosed, "File is closed (invalid file descriptor).");
 DECLARE_EXCEPTION (PageAlreadyFree, "Page already free.");
 DECLARE_EXCEPTION (PageAlreadyPinned, "Page already pinned.");
-DECLARE_EXCEPTION (EOF, "End of file.");
+DECLARE_EXCEPTION (Eof, "End of file.");
 DECLARE_EXCEPTION (BufferTooSmall, "Attempting to resize, buffer too small.");
 
 DECLARE_EXCEPTION (NoMemory, "No memory.");

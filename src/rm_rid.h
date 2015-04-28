@@ -34,8 +34,10 @@ public:
 
     RC GetPageNum(PageNum &pageNum) const;         // Return page number
     RC GetSlotNum(SlotNum &slotNum) const;         // Return slot number
+    bool operator == (const RID& other) const;
+    bool operator != (const RID& other) const;
 
-private:
+public:
   PageNum page_num;
   SlotNum slot_num;
 };

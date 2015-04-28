@@ -1,0 +1,95 @@
+Name:  Sujeet Gholap
+Email: sujeet@cs.stanford.edu
+
+
+Note
+----
+- Implemented chaining, so that a key can have
+  as many RIDs associated with it as possible.
+- Implemented elements of lazy delete.
+  When an RID is deleted, later, another RID will
+  be put into its place if inserted.
+
+
+Overall design
+--------------
+- Wrote an alternative API for PF component
+  this API uses exceptions and hence much cleaner
+  PF.cc PF.h test/PF_test.cc
+- The IX interface is implemented in
+  IX.cc IX.h test/IX_test.cc
+- As less malloc-free / new-delete as possible.
+  Wherever possible, objects are allocated on the stack.
+  (sometimes, using placement new)
+
+
+B+ tree details
+---------------
+The following invariants are maintained:
+- number of key slots in a node is always even
+  (irrespective of key size) this makes the code simpler.
+- for internal nodes, we evenly split it into two
+  and promote one key.
+- for leaf nodes,
+  split into two equal halves,
+  promote the last key of the first half,
+  insert the new key accordingly
+
+
+Key Data Structures
+-------------------
+- TreePage
+  This page stores the nodes of B+ tree
+  It has
+  - key count
+  - key size
+  - key type
+  - key array
+  - page pointer array (page pointrs are nothing but page numbers)
+  A root page is just a tree page with is_root = true
+  A leaf page is just a tree page with is_leaf = true
+
+- RIDPage (aka bucket)
+  This page stores the RIDs belonging to a particular key
+  It has
+  - rid count
+  - pointer to next bucket (page number)
+  - a bitmap to keep track of free slots
+
+- Bitmap
+  A bitmap is defined in bitmap.h and implemented in bitmap.cc
+
+- Memory mapped Arrays for keys and rids
+  Array.cc and Array.h provides an array-like interface for
+  the keys and page_number stored on the page,
+  accessing and comparing the keys is as easy as
+  `page.keys [i] < key`
+
+
+Key Algorithms
+--------------
+- Recursive Insert
+  insert (node)
+      -> inserts into the tree rooted at node
+      -> returns a promoted-up key and pointer to new sibling
+         in case of splitting
+
+- Hybrid Delete
+  The delete algorithm used is an hybrid approach
+  elements of tombstones and lazy delete
+  - never deletes any pages or nodes
+  - deletion of an rid marks its slot in the page as empty,
+    which can be filled later
+
+
+Testing
+-------
+- Set up gtest framework for unit tsting
+- Almost all the test cases listed on the site
+  have been implemented in google test framework
+  and the code is tested against those.
+- tests in /test directory
+- tests the supporting data structure as well as
+  the IX and PF interfaces.
+- to run all the tests:
+  cd src; make; cd ../test; make

@@ -19,6 +19,7 @@ GTEST_DIR = ../gtest
 # Where to find user code.
 USER_DIR = ../src
 TEST_DIR = ../test
+LIB_DIR  = ../lib
 
 # Flags passed to the preprocessor.
 # Set Google Test's header directory as a system directory, such that
@@ -26,7 +27,7 @@ TEST_DIR = ../test
 CPPFLAGS = -isystem $(GTEST_DIR)/include
 
 # Flags passed to the C++ compiler.
-CXXFLAGS = -g -Wall -Wextra -pthread
+CXXFLAGS = -g -Wall -Wextra -pthread -std=c++11
 
 CXX = g++
 
@@ -35,15 +36,18 @@ CXX = g++
 GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
                 $(GTEST_DIR)/include/gtest/internal/*.h
 
-TESTS = bitmap Array
+TESTS = bitmap Array IX PF
 TEST_OBJECTS = $(patsubst %,%_test.o,$(TESTS))
-TEST_CLASSES = $(patsubst %,%.o,$(TESTS))
+TEST_CLASSES = $(patsubst %,%.o,$(TESTS)) \
+               $(PF_OBJECTS) $(RM_OJEBCTS) $(IX_OBJECTS)
+
+LIBS = $(LIB_DIR)/libix.a $(LIB_DIR)/libpf.a $(LIB_DIR)/librm.a
 
 all: tests
-
-tests: $(TEST_OBJECTS) $(TEST_CLASSES) gtest_main.a
-	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 	./tests
+
+tests: $(TEST_OBJECTS) $(TEST_CLASSES) gtest_main.a $(LIBS)
+	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@
 
 %_test.o : $(TEST_DIR)/%_test.cc $(USER_DIR)/%.h $(GTEST_HEADERS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -I$(USER_DIR) -c $<
