@@ -624,3 +624,31 @@ TEST (IX_Manager, SingleStringKeyManyRecords)
   CLOSE ();
   remove ("test.1");
 }
+
+TEST (IX_Manager, ScanForNonExistentKey)
+{
+  remove ("test.1");
+
+  MGR();
+  mgr.CreateIndex ("test", 1, INT, 4);
+  IX::IndexHandle handle = mgr.OpenIndex ("test", 1);
+
+  // Insert 0 to 99
+  for (int key = 0; key < 100; ++key) {
+    RID rid (1, key);
+    handle.Insert ((void*)&key, rid);
+  }
+
+  // Scan for 100
+  int key = 100;
+  IX::Scan scan (handle, EQ_OP, (void*)&key);
+  RID rid;
+  int counter = 0;
+  while ((rid = scan.next()) != IX::Scan::end) {
+    EXPECT_EQ (rid.slot_num, counter++);
+  }
+  EXPECT_EQ (counter, 0);
+
+  CLOSE ();
+  remove ("test.1");
+}

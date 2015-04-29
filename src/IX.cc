@@ -594,12 +594,14 @@ Scan::Scan (const IndexHandle& indexHandle,
   this->next_key_i ();
   // Now both leaf_page_num and key_i are set.
 
-  leaf_page = this->index_file.GetPage (this->leaf_page_num);
-  new (&leaf) TreePage (leaf_page);
-  this->bucket_page_num = leaf.page_nums [this->key_i];
-  this->rid_i = -1;
-  this->next_rid_i ();
-  this->index_file.UnpinPage (leaf_page);
+  if (this->leaf_page_num != -1) {
+    leaf_page = this->index_file.GetPage (this->leaf_page_num);
+    new (&leaf) TreePage (leaf_page);
+    this->bucket_page_num = leaf.page_nums [this->key_i];
+    this->rid_i = -1;
+    this->next_rid_i ();
+    this->index_file.UnpinPage (leaf_page);
+  }
   // Now all the four parametrs for scan are set.
 }
 
