@@ -48,7 +48,7 @@ class FileHandle
 {
   friend class Manager;
 private:
-  PF_FileHandle* filehandle;
+  PF_FileHandle filehandle;
 public:
   FileHandle ();
   FileHandle (const FileHandle &fileHandle);

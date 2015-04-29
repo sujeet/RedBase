@@ -37,7 +37,6 @@ TEST (IX_Manager, CreateIndex)
 {
   remove ("test");
   remove ("test.1");
-
   MGR();
   mgr.CreateIndex ("test", 1, INT, 4);
   IX::IndexHandle handle = mgr.OpenIndex ("test", 1);
@@ -135,7 +134,7 @@ TEST (IX_Manager, DeleteFromClosedIndex)
   remove ("test.1");
 }
 
-TEST (IX_Manager, CreateIndexBagArgs)
+TEST (IX_Manager, CreateIndexBadArgs)
 {
   remove ("test");
   MGR();
@@ -257,7 +256,7 @@ TEST (IX_Manager, SingleLeafInsert)
 
 TEST (IX_Manager, MultiLeafInsert)
 {
-  insert_seq_keys (3000);
+  insert_seq_keys (30000);
 }
 
 // Insert a lot of RIDs under a single key.
@@ -535,7 +534,7 @@ TEST (IX_Manager, LotOfStringKeys)
   MGR();
   mgr.CreateIndex ("test", 1, STRING, 2);
   IX::IndexHandle handle = mgr.OpenIndex ("test", 1);
-  
+
   char *key = new char [2];
 
   for (int i = 0; i < key_count; ++i) {
@@ -558,44 +557,9 @@ TEST (IX_Manager, LotOfStringKeys)
   remove ("test.1");
 }
 
-TEST (IX_Manager, SingleStringKeyManyRecords)
-{
-  int key_count = 5000;
-
-  remove ("test.1");
-
-  MGR();
-  mgr.CreateIndex ("test", 1, STRING, 2);
-  IX::IndexHandle handle = mgr.OpenIndex ("test", 1);
-  
-  char *key = new char [2];
-  key [0] = 'h';
-  key [1] = 'i';
-
-  for (int i = 0; i < key_count; ++i) {
-    RID rid (1, i);
-    handle.Insert ((void*)&key, rid);
-  }
-
-  key [0] = 'z';
-  IX::Scan scan (handle, LE_OP, (void*)key);
-  RID rid;
-  int counter = 0;
-  while ((rid = scan.next()) != IX::Scan::end) {
-    EXPECT_EQ (rid.slot_num, counter++);
-  }
-  EXPECT_EQ (counter, key_count);
-
-  delete[] key;
-  CLOSE ();
-  remove ("test.1");
-}
-
 TEST (IX_Manager, LargeStringKey)
 {
-  // Use 1000 byte strings as keys
-  // This way, only two fit in a node
-  int key_count = 2000;
+  int key_count = 10000;
   int key_size = 255;
 
   remove ("test.1");
@@ -615,6 +579,39 @@ TEST (IX_Manager, LargeStringKey)
   }
 
   key [0] = 200;
+  IX::Scan scan (handle, LE_OP, (void*)key);
+  RID rid;
+  int counter = 0;
+  while ((rid = scan.next()) != IX::Scan::end) {
+    EXPECT_EQ (rid.slot_num, counter++);
+  }
+  EXPECT_EQ (counter, key_count);
+
+  delete[] key;
+  CLOSE ();
+  remove ("test.1");
+}
+
+TEST (IX_Manager, SingleStringKeyManyRecords)
+{
+  int key_count = 2000;
+
+  remove ("test.1");
+
+  MGR();
+  mgr.CreateIndex ("test", 1, STRING, 2);
+  IX::IndexHandle handle = mgr.OpenIndex ("test", 1);
+  
+  char *key = new char [2];
+  key [0] = 'h';
+  key [1] = 'i';
+
+  for (int i = 0; i < key_count; ++i) {
+    RID rid (1, i);
+    handle.Insert ((void*)&key, rid);
+  }
+
+  key [0] = 'z';
   IX::Scan scan (handle, LE_OP, (void*)key);
   RID rid;
   int counter = 0;

@@ -32,7 +32,7 @@
 // PF_BufPageDesc - struct containing data about a page in the buffer
 //
 struct PF_BufPageDesc {
-    char       *pData;      // page contents
+    char       pData [MEMORY_PAGE_SIZE]; // page contents
     int        next;        // next in the linked list of buffer pages
     int        prev;        // prev in the linked list of buffer pages
     int        bDirty;      // TRUE if page is dirty

@@ -68,3 +68,18 @@ TEST (PF_Manager, OpenExisting)
   PF::FileHandle handle = mgr.OpenFile ("test_file");
   remove ("test_file");
 }
+
+TEST (PF_Manager, AddPageToFile)
+{
+  remove ("test_file");
+  MK_MGR ();
+  mgr.CreateFile ("test_file");
+  PF::FileHandle handle = mgr.OpenFile ("test_file");
+  PF::PageHandle page = handle.AllocatePage ();
+  handle.MarkDirty (page.GetPageNum());
+  char *data = page.GetData ();
+  data [0] = 'a';
+  handle.UnpinPage (page);
+  mgr.CloseFile (handle);
+  remove ("test_file");
+}

@@ -51,7 +51,7 @@ void Manager::DestroyFile (const char *fileName)
 FileHandle Manager::OpenFile (const char *fileName)
 {
   FileHandle filehandle;
-  HANDLE_ERROR (this->manager->OpenFile (fileName, *filehandle.filehandle));
+  HANDLE_ERROR (this->manager->OpenFile (fileName, filehandle.filehandle));
   return filehandle;
 }
 
@@ -72,41 +72,33 @@ FileHandle Manager::OpenFile (const std::string& fileName)
 
 void Manager::CloseFile (FileHandle &filehandle)
 {
-  HANDLE_ERROR (this->manager->CloseFile (*filehandle.filehandle));
+  HANDLE_ERROR (this->manager->CloseFile (filehandle.filehandle));
 }
 
-FileHandle::FileHandle ()
-{
-  this->filehandle = new PF_FileHandle ();
-}
+FileHandle::FileHandle () {}
 
 FileHandle::FileHandle (const FileHandle &fileHandle)
-{
-  this->filehandle = new PF_FileHandle (*fileHandle.filehandle);
-}
+  : filehandle (fileHandle.filehandle) {}
 
 FileHandle& FileHandle::operator= (const FileHandle &fileHandle)
 {
-  *this->filehandle = *fileHandle.filehandle;
+  this->filehandle = fileHandle.filehandle;
   return (*this);
 }
 
-FileHandle::~FileHandle ()
-{
-  delete this->filehandle;
-}
+FileHandle::~FileHandle () {}
 
 PageHandle FileHandle::GetFirstPage () const
 {
   PageHandle pagehandle;
-  HANDLE_ERROR (this->filehandle->GetFirstPage (*pagehandle.pagehandle));
+  HANDLE_ERROR (this->filehandle.GetFirstPage (*pagehandle.pagehandle));
   return pagehandle;
 }
 
 PageHandle FileHandle::GetLastPage () const
 {
   PageHandle pagehandle;
-  HANDLE_ERROR (this->filehandle->GetLastPage (*pagehandle.pagehandle));
+  HANDLE_ERROR (this->filehandle.GetLastPage (*pagehandle.pagehandle));
   return pagehandle;
 }
 
@@ -114,7 +106,7 @@ PageHandle FileHandle::GetLastPage () const
 PageHandle FileHandle::GetNextPage (PageNum current) const
 {
   PageHandle pagehandle;
-  HANDLE_ERROR (this->filehandle->GetNextPage (current,
+  HANDLE_ERROR (this->filehandle.GetNextPage (current,
                                                *pagehandle.pagehandle));
   return pagehandle;
 }
@@ -122,7 +114,7 @@ PageHandle FileHandle::GetNextPage (PageNum current) const
 PageHandle FileHandle::GetPrevPage (PageNum current) const
 {
   PageHandle pagehandle;
-  HANDLE_ERROR (this->filehandle->GetPrevPage (current,
+  HANDLE_ERROR (this->filehandle.GetPrevPage (current,
                                                *pagehandle.pagehandle));
   return pagehandle;
 }
@@ -130,7 +122,7 @@ PageHandle FileHandle::GetPrevPage (PageNum current) const
 PageHandle FileHandle::GetPage (PageNum pageNum) const
 {
   PageHandle pagehandle;
-  HANDLE_ERROR (this->filehandle->GetThisPage (pageNum,
+  HANDLE_ERROR (this->filehandle.GetThisPage (pageNum,
                                                *pagehandle.pagehandle));
   return pagehandle;
 }
@@ -139,23 +131,23 @@ PageHandle FileHandle::GetPage (PageNum pageNum) const
 PageHandle FileHandle::AllocatePage ()
 {
   PageHandle pagehandle;
-  HANDLE_ERROR (this->filehandle->AllocatePage (*pagehandle.pagehandle));
+  HANDLE_ERROR (this->filehandle.AllocatePage (*pagehandle.pagehandle));
   return pagehandle;
 }
 
 void FileHandle::DisposePage (PageNum pageNum)
 {
-  HANDLE_ERROR (this->filehandle->DisposePage (pageNum));
+  HANDLE_ERROR (this->filehandle.DisposePage (pageNum));
 }
 
 void FileHandle::MarkDirty (PageNum pageNum) const
 {
-  HANDLE_ERROR (this->filehandle->MarkDirty (pageNum));
+  HANDLE_ERROR (this->filehandle.MarkDirty (pageNum));
 }
 
 void FileHandle::UnpinPage (PageNum pageNum) const
 {
-  HANDLE_ERROR (this->filehandle->UnpinPage (pageNum));
+  HANDLE_ERROR (this->filehandle.UnpinPage (pageNum));
 }
 
 void FileHandle::UnpinPage (const PageHandle& page) const
@@ -171,7 +163,7 @@ void FileHandle::DoneWritingTo (const PageHandle& page) const
 
 void FileHandle::ForcePages (PageNum pageNum) const
 {
-  HANDLE_ERROR (this->filehandle->ForcePages (pageNum));
+  HANDLE_ERROR (this->filehandle.ForcePages (pageNum));
 }
 
 PageHandle::PageHandle ()

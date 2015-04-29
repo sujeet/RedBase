@@ -119,6 +119,9 @@ void IndexHandle::Insert (void *data, const RID& rid)
   ArrayElem key (root.hdr->key_type,
                  root.hdr->key_size,
                  (char*) data);
+  cout << "Insert ";
+  if (root.hdr->key_type == INT) cout << key << " -> ";
+  cout << "(" << rid.page_num << ", " << rid.slot_num << ")" << endl;
   KeyAndPageNum ret;
   try {
     new (&ret) KeyAndPageNum (root.insert (key, rid, this->index_file));
@@ -182,10 +185,13 @@ TreePage::TreePage (PF::PageHandle& pf_page)
 
 TreePage::TreePage (char* start_of_page, const TreePageHdr& hdr)
 {
-  memcpy (start_of_page,
-          (void *)(&hdr),
-          sizeof (TreePageHdr));
   this->hdr = (TreePageHdr*) start_of_page;
+  this->hdr->num_keys = hdr.num_keys;
+  this->hdr->key_size = hdr.key_size;
+  this->hdr->key_type = hdr.key_type;
+  this->hdr->is_root = hdr.is_root;
+  this->hdr->is_leaf = hdr.is_leaf;
+
   this->init (start_of_page);
   this->page_nums [this->hdr->num_keys] = -1;
 }
@@ -579,7 +585,9 @@ Scan::Scan (const IndexHandle& indexHandle,
   new (&this->key) ArrayElem (leaf.hdr->key_type,
                               leaf.hdr->key_size,
                               (char*) (value ? value : this->dummy));
-  // this->key = key;
+  if (value == NULL) cout << "scanning for everything" << endl;
+  else if (leaf.hdr->key_type == INT)
+    cout << "scanning for " << this->key << endl;
   this->index_file.UnpinPage (leaf_page);
   this->leaf_page_num = leaf_page.GetPageNum ();
   this->key_i = -1;
@@ -678,6 +686,7 @@ void Scan::next_rid_i ()
 RID Scan::next ()
 {
   if (this->leaf_page_num == -1) {
+    cout << "done scan" << endl;
     RID rid (-1, -1);
     return rid;
   }
@@ -689,6 +698,7 @@ RID Scan::next ()
 
     this->next_rid_i ();
 
+    cout << "Scan returned (" << rid.page_num << ", " << rid.slot_num << ")" << endl;
     return rid;
   }
 }

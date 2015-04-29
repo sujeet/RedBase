@@ -113,18 +113,11 @@ PF_BufferMgr::PF_BufferMgr(int _numPages) : hashTable(PF_HASH_TBL_SIZE)
 #endif
 
    // Allocate memory for buffer page description table
-   bufTable = new PF_BufPageDesc[numPages];
+   bufTable = new PF_BufPageDesc[numPages]();
 
    // Initialize the buffer table and allocate memory for buffer pages.
    // Initially, the free list contains all pages
    for (int i = 0; i < numPages; i++) {
-      if ((bufTable[i].pData = new char[pageSize]) == NULL) {
-         cerr << "Not enough memory for buffer\n";
-         exit(1);
-      }
-
-      memset ((void *)bufTable[i].pData, 0, pageSize);
-
       bufTable[i].prev = i - 1;
       bufTable[i].next = i + 1;
    }
@@ -144,10 +137,6 @@ PF_BufferMgr::PF_BufferMgr(int _numPages) : hashTable(PF_HASH_TBL_SIZE)
 //
 PF_BufferMgr::~PF_BufferMgr()
 {
-   // Free up buffer pages and tables
-   for (int i = 0; i < this->numPages; i++)
-      delete [] bufTable[i].pData;
-
    delete [] bufTable;
 
 #ifdef PF_STATS
@@ -607,18 +596,11 @@ RC PF_BufferMgr::ResizeBuffer(int iNewSize)
    ClearBuffer();
 
    // Allocate memory for a new buffer table
-   PF_BufPageDesc *pNewBufTable = new PF_BufPageDesc[iNewSize];
+   PF_BufPageDesc *pNewBufTable = new PF_BufPageDesc[iNewSize]();
 
    // Initialize the new buffer table and allocate memory for buffer
    // pages.  Initially, the free list contains all pages
    for (i = 0; i < iNewSize; i++) {
-      if ((pNewBufTable[i].pData = new char[pageSize]) == NULL) {
-         cerr << "Not enough memory for buffer\n";
-         exit(1);
-      }
-
-      memset ((void *)pNewBufTable[i].pData, 0, pageSize);
-
       pNewBufTable[i].prev = i - 1;
       pNewBufTable[i].next = i + 1;
    }
