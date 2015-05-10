@@ -1,7 +1,7 @@
 #include "rm.h"
 #include "rm_rid.h"
 
-const static int INVALID = -1;
+const int RM_RID_NO_INIT = -99;
 
 RID::RID():page_num(INVALID), slot_num(INVALID){}
 

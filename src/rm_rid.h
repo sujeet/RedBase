@@ -22,6 +22,8 @@ typedef int PageNum;
 //
 typedef int SlotNum;
 
+static const int INVALID = -1;
+
 //
 // RID: Record id interface
 //

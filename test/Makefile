@@ -36,7 +36,7 @@ CXX = g++
 GTEST_HEADERS = $(GTEST_DIR)/include/gtest/*.h \
                 $(GTEST_DIR)/include/gtest/internal/*.h
 
-TESTS = bitmap Array IX PF
+TESTS = bitmap Array IX PF RM
 TEST_OBJECTS = $(patsubst %,%_test.o,$(TESTS))
 TEST_CLASSES = $(patsubst %,%.o,$(TESTS)) \
                $(PF_OBJECTS) $(RM_OJEBCTS) $(IX_OBJECTS)
@@ -44,8 +44,8 @@ TEST_CLASSES = $(patsubst %,%.o,$(TESTS)) \
 LIBS = $(LIB_DIR)/libix.a $(LIB_DIR)/libpf.a $(LIB_DIR)/librm.a
 
 all: tests
-	./tests
-	# ./tests --gtest_filter=IX_Manager.SingleStringKey*
+	# ./tests
+	./tests --gtest_filter=RM*
 
 tests: $(TEST_OBJECTS) $(TEST_CLASSES) gtest_main.a $(LIBS)
 	$(CXX) $(CPPFLAGS) $(CXXFLAGS) -lpthread $^ -o $@

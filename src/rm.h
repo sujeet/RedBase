@@ -22,44 +22,45 @@
 #include "rm_rid.h"
 #include "pf.h"
 
+#include "RM.h"
+
+#define RM_EOF 10
+
+class RM_FileHandle;
+class RM_Record;
+class RM_FileScan;
+class RM_Manager;
+
 //
 // RM_Record: RM Record interface
 //
 class RM_Record {
-  friend class RM_FileScan;
   friend class RM_FileHandle;
-public:
-    RM_Record ();
-    ~RM_Record();
-
-    // Return the data corresponding to the record.  Sets *pData to the
-    // record contents.
-    RC GetData(char *&pData) const;
-
-    // Return the RID associated with the record
-    RC GetRid (RID &rid) const;
+  friend class RM_FileScan;
 
 private:
-  char *data;
-  RID rid;
-};
+  RM::Record record;
 
-typedef struct RM_FileHeader
-{
-  int record_size;
-  int first_free_page;
-} RM_FileHeader;
+public:
+  // Return the data corresponding to the record.  Sets *pData to the
+  // record contents.
+  RC GetData(char *&pData) const;
+
+  // Return the RID associated with the record
+  RC GetRid (RID &rid) const;
+};
 
 //
 // RM_FileHandle: RM File interface
 //
 class RM_FileHandle {
-  friend class RM_Manager;
   friend class RM_FileScan;
-public:
-    RM_FileHandle ();
-    ~RM_FileHandle();
+  friend class RM_Manager;
 
+private:
+  RM::FileHandle handle;
+
+public:
     // Given a RID, return the record
     RC GetRec     (const RID &rid, RM_Record &rec) const;
 
@@ -71,19 +72,18 @@ public:
     // Forces a page (along with any contents stored in this class)
     // from the buffer pool to disk.  Default value forces all pages.
     RC ForcePages (PageNum pageNum = ALL_PAGES);
-private:
-  PF_FileHandle pf_filehandle;
-  RM_FileHeader hdr;
-  bool header_modified;
 };
 
 //
 // RM_FileScan: condition-based scan of records in the file
 //
 class RM_FileScan {
+private:
+  RM::Scan scan;
+
 public:
-    RM_FileScan  ();
-    ~RM_FileScan ();
+  RM_FileScan  () {}
+  ~RM_FileScan () {}
 
     RC OpenScan  (const RM_FileHandle &fileHandle,
                   AttrType   attrType,
@@ -94,23 +94,15 @@ public:
                   ClientHint pinHint = NO_HINT); // Initialize a file scan
     RC GetNextRec(RM_Record &rec);               // Get next matching record
     RC CloseScan ();                             // Close the scan
-private:
-  bool predicate(char *data) const;
-  bool open;
-  const RM_FileHandle *rm_filehandle;
-  AttrType   attrType;
-  int        attrLength;
-  int        attrOffset;
-  CompOp     compOp;
-  void       *value;
-  int        previous_page_num;
-  int        slot_num;
 };
 
 //
 // RM_Manager: provides RM file management
 //
 class RM_Manager {
+private:
+  RM::Manager mgr;
+
 public:
     RM_Manager    (PF_Manager &pfm);
     ~RM_Manager   ();
@@ -120,25 +112,11 @@ public:
     RC OpenFile   (const char *fileName, RM_FileHandle &fileHandle);
 
     RC CloseFile  (RM_FileHandle &fileHandle);
-private:
-  PF_Manager *pfm;
 };
 
 //
 // Print-error function
 //
 void RM_PrintError(RC rc);
-
-#define RM_RID_NO_INIT         (START_RM_WARN + 0) // uninitialized RID
-#define RM_RECORD_NO_INIT      (START_RM_WARN + 1) // uninitialized RM_Record
-#define RM_RECORD_NO_EXIST     (START_RM_WARN + 2) // non-existing record
-#define RM_EOF                 (START_RM_WARN + 3) // end of file
-#define RM_INVALID_RECORD_SIZE (START_RM_WARN + 4) // end of file
-#define RM_UNOPENED_FILESCAN   (START_RM_WARN + 5) // interacting with filescan
-                                                   // without opening one
-#define RM_LASTWARN            RM_UNOPENED_FILESCAN
-
-#define RM_INVALID_SCAN_PARAMS (START_RM_ERR - 0) // invalid parms for scan
-#define RM_LASTERROR           RM_INVALID_SCAN_PARAMS
 
 #endif
