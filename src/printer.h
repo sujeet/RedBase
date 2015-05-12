@@ -11,6 +11,7 @@
 #include <iostream>
 #include <cstring>
 #include "redbase.h"      // For definition of MAXNAME
+#include "SM.h"
 
 #define MAXPRINTSTRING  ((2*MAXNAME) + 5)
 
@@ -37,6 +38,15 @@ struct DataAttrInfo
        attrType = d.attrType;
        attrLength = d.attrLength;
        indexNo = d.indexNo;
+    };
+
+    DataAttrInfo (const Attribute& a) {
+       strcpy (relName, a.table_name);
+       strcpy (attrName, a.name);
+       offset = a.offset;
+       attrType = a.type;
+       attrLength = a.len;
+       indexNo = a.index_num;
     };
 
     DataAttrInfo& operator=(const DataAttrInfo &d) {

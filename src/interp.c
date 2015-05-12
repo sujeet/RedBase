@@ -15,10 +15,10 @@
 #include "parser_internal.h"
 #include "y.tab.h"
 
-#include "sm.h"
+#include "SM.h"
 #include "ql.h"
 
-extern SM_Manager *pSmm;
+extern SM::Manager *pSmm;
 extern QL_Manager *pQlm;
 
 #define E_OK                0
@@ -95,51 +95,51 @@ RC interp(NODE *n)
             }
 
             /* Make the call to create */
-            errval = pSmm->CreateTable(n->u.CREATETABLE.relname, nattrs, 
+            pSmm->CreateTable(n->u.CREATETABLE.relname, nattrs, 
                   attrInfos);
             break;
          }   
 
       case N_CREATEINDEX:            /* for CreateIndex() */
 
-         errval = pSmm->CreateIndex(n->u.CREATEINDEX.relname,
+         pSmm->CreateIndex(n->u.CREATEINDEX.relname,
                n->u.CREATEINDEX.attrname);
          break;
 
       case N_DROPINDEX:            /* for DropIndex() */
 
-         errval = pSmm->DropIndex(n->u.DROPINDEX.relname,
+         pSmm->DropIndex(n->u.DROPINDEX.relname,
                n->u.DROPINDEX.attrname);
          break;
 
       case N_DROPTABLE:            /* for DropTable() */
 
-         errval = pSmm->DropTable(n->u.DROPTABLE.relname);
+         pSmm->DropTable(n->u.DROPTABLE.relname);
          break;
 
       case N_LOAD:            /* for Load() */
 
-         errval = pSmm->Load(n->u.LOAD.relname,
+         pSmm->Load(n->u.LOAD.relname,
                n->u.LOAD.filename);
          break;
 
       case N_SET:                    /* for Set() */
 
-         errval = pSmm->Set(n->u.SET.paramName,
+         pSmm->Set(n->u.SET.paramName,
                n->u.SET.string);
          break;
 
       case N_HELP:            /* for Help() */
 
          if (n->u.HELP.relname)
-            errval = pSmm->Help(n->u.HELP.relname);
+            pSmm->Help(n->u.HELP.relname);
          else
-            errval = pSmm->Help();
+            pSmm->Help();
          break;
 
       case N_PRINT:            /* for Print() */
 
-         errval = pSmm->Print(n->u.PRINT.relname);
+         pSmm->Print(n->u.PRINT.relname);
          break;
 
       case N_QUERY:            /* for Query() */

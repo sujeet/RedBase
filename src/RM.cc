@@ -260,7 +260,7 @@ void Page::clear ()
 
 Record Page::get (SlotNum slot_num) const
 {
-  assert (slot_num < this->hdr->num_records);
+  assert (slot_num < this->max_num_records);
   assert (this->bitmap.get (slot_num));
 
   Record record;
@@ -355,11 +355,11 @@ int HeaderPage::GetRecordSize () const
 const Record Scan::end;
 
 void Scan::open (const FileHandle &fileHandle,
-                 AttrType   attrType,
-                 int        attrLength,
-                 int        attrOffset,
-                 CompOp     compOp,
-                 void       *value)
+                 AttrType    attrType,
+                 int         attrLength,
+                 int         attrOffset,
+                 CompOp      compOp,
+                 const void* value)
 {
   if ((attrLength < 0) ||
       (attrType != INT && attrType != FLOAT && attrType != STRING) ||

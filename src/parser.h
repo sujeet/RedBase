@@ -54,9 +54,12 @@ std::ostream &operator<<(std::ostream &s, const AttrType &at);
 // Parse function
 //
 class QL_Manager;
-class SM_Manager;
+namespace SM
+{
+  class Manager;
+}
 
-void RBparse(PF_Manager &pfm, SM_Manager &smm, QL_Manager &qlm);
+void RBparse(PF_Manager &pfm, SM::Manager &smm, QL_Manager &qlm);
 
 //
 // Error printing function; calls component-specific functions

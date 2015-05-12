@@ -14,9 +14,9 @@
 #include <unistd.h>
 #include "redbase.h"
 #include "ql.h"
-#include "sm.h"
-#include "ix.h"
-#include "rm.h"
+#include "SM.h"
+#include "IX.h"
+#include "RM.h"
 
 using namespace std;
 
@@ -25,7 +25,7 @@ using namespace std;
 //
 // Constructor for the QL Manager
 //
-QL_Manager::QL_Manager(SM_Manager &smm, IX_Manager &ixm, RM_Manager &rmm)
+QL_Manager::QL_Manager(SM::Manager &smm, IX::Manager &ixm, RM::Manager &rmm)
 {
     // Can't stand unused variable warnings!
     assert (&smm && &ixm && &rmm);

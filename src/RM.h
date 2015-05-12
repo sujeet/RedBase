@@ -128,7 +128,7 @@ private:
   int attr_len;
   int attr_offset;
   CompOp comp_op;
-  void* value;
+  const void* value;
 
   SlotNum current_slot_num;
   Page current_page;
@@ -142,11 +142,11 @@ public:
   Scan () : already_unpinned (true) {}
   ~Scan () {}
   void open (const FileHandle &fileHandle,
-             AttrType   attrType,
-             int        attrLength,
-             int        attrOffset,
-             CompOp     compOp,
-             void       *value);
+             AttrType    attrType,
+             int         attrLength,
+             int         attrOffset,
+             CompOp      compOp,
+             const void* value);
   Record next ();
   void close ();
 };

@@ -109,7 +109,7 @@ PF::PageHandle IndexHandle::GetFirstLeaf () const
   return page;
 }
 
-void IndexHandle::Insert (void *data, const RID& rid)
+void IndexHandle::Insert (const void *data, const RID& rid)
 {
   if (this->uninitialized) throw error::UninitializedIndexHandle ();
 
@@ -119,9 +119,9 @@ void IndexHandle::Insert (void *data, const RID& rid)
   ArrayElem key (root.hdr->key_type,
                  root.hdr->key_size,
                  (char*) data);
-  cout << "Insert ";
-  if (root.hdr->key_type == INT) cout << key << " -> ";
-  cout << "(" << rid.page_num << ", " << rid.slot_num << ")" << endl;
+  // cout << "Insert ";
+  // if (root.hdr->key_type == INT) cout << key << " -> ";
+  // cout << "(" << rid.page_num << ", " << rid.slot_num << ")" << endl;
   KeyAndPageNum ret;
   try {
     new (&ret) KeyAndPageNum (root.insert (key, rid, this->index_file));
@@ -154,7 +154,7 @@ void IndexHandle::Insert (void *data, const RID& rid)
   this->index_file.DoneWritingTo (root_page);
 }
 
-void IndexHandle::Delete (void *data, const RID& rid)
+void IndexHandle::Delete (const void *data, const RID& rid)
 {
   if (this->uninitialized) throw error::UninitializedIndexHandle ();
 
@@ -585,9 +585,9 @@ Scan::Scan (const IndexHandle& indexHandle,
   new (&this->key) ArrayElem (leaf.hdr->key_type,
                               leaf.hdr->key_size,
                               (char*) (value ? value : this->dummy));
-  if (value == NULL) cout << "scanning for everything" << endl;
-  else if (leaf.hdr->key_type == INT)
-    cout << "scanning for " << this->key << endl;
+  // if (value == NULL) cout << "scanning for everything" << endl;
+  // else if (leaf.hdr->key_type == INT)
+  //   cout << "scanning for " << this->key << endl;
   this->index_file.UnpinPage (leaf_page);
   this->leaf_page_num = leaf_page.GetPageNum ();
   this->key_i = -1;
@@ -688,7 +688,7 @@ void Scan::next_rid_i ()
 RID Scan::next ()
 {
   if (this->leaf_page_num == -1) {
-    cout << "done scan" << endl;
+    // cout << "done scan" << endl;
     RID rid (-1, -1);
     return rid;
   }
@@ -700,7 +700,7 @@ RID Scan::next ()
 
     this->next_rid_i ();
 
-    cout << "Scan returned (" << rid.page_num << ", " << rid.slot_num << ")" << endl;
+    // cout << "Scan returned (" << rid.page_num << ", " << rid.slot_num << ")" << endl;
     return rid;
   }
 }

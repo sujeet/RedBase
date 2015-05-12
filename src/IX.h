@@ -26,8 +26,8 @@ private:
 public:
   IndexHandle (): uninitialized (true) {}
   IndexHandle (const IndexHandle& other);
-  void Insert (void *data, const RID &rid);
-  void Delete (void *data, const RID &rid);
+  void Insert (const void *data, const RID &rid);
+  void Delete (const void *data, const RID &rid);
   void ForcePages () const;
 };
 

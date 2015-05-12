@@ -1,0 +1,41 @@
+Name:  Sujeet Gholap
+Email: sujeet@cs.stanford.edu
+
+
+Overall design
+--------------
+- This part has been more about consumption
+  of earlier-designed APIs rather than designing new ones.
+- My RM component submission was quite incomplete,
+  for this part, I re-wrote the RM component from scratch.
+- Both RM and IX components were designed keeping
+  ease-of-use of the API in mind. That greatly simplified
+  writing code for SM part.
+
+
+Difficulties / challenges
+-------------------------
+- The way I designed the RM component, new pages are
+  added at the beginning of the list and not at the end.
+  That results in unusual iteration order while scanning.
+  For example, say, 4 records fit in one page.
+  insertion order: 1 2 3 4 5 6
+  scanning order : 5 6 1 2 3 4
+  this caused a few tests to fail in the test suite.
+  For those cases, I manually checked the output sorting,
+  it with bash-script and making sure that it is correct.
+- This was the first time there was an absolute need to
+  be able to distinguish between warnings and errors
+  (+ve error code and -ve error code)
+  in my exception-based setup I achieved the same by
+  providing two classes: exception and warning.
+
+
+Testing
+-------
+- As I implemented RM from scratch, I added tests for RM
+  to the Google test framework I set up.
+- As SM part was more about interacting with an interpreter,
+  and hardly about the API, I manually tested using the REPL.
+- In addition, I used the tests in the shared folder under
+  class directory.

@@ -12,16 +12,16 @@
 #include <string.h>
 #include "redbase.h"
 #include "parser.h"
-#include "rm.h"
-#include "ix.h"
-#include "sm.h"
+#include "RM.h"
+#include "IX.h"
+#include "SM.h"
 
 //
 // QL_Manager: query language (DML)
 //
 class QL_Manager {
 public:
-    QL_Manager (SM_Manager &smm, IX_Manager &ixm, RM_Manager &rmm);
+    QL_Manager (SM::Manager &smm, IX::Manager &ixm, RM::Manager &rmm);
     ~QL_Manager();                       // Destructor
 
     RC Select  (int nSelAttrs,           // # attrs in select clause

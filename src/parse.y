@@ -26,7 +26,7 @@
 #include "pf.h"     // for PF_PrintError
 #include "rm.h"     // for RM_PrintError
 #include "ix.h"     // for IX_PrintError
-#include "sm.h"
+#include "SM.h"
 #include "ql.h"
 
 using namespace std;
@@ -63,7 +63,7 @@ int bExit;                 // when to return from RBparse
 int bQueryPlans;           // When to print the query plans
 
 PF_Manager *pPfm;          // PF component manager
-SM_Manager *pSmm;          // SM component manager
+SM::Manager *pSmm;          // SM component manager
 QL_Manager *pQlm;          // QL component manager
 
 %}
@@ -572,8 +572,8 @@ void PrintError(RC rc)
       RM_PrintError(rc);
    else if (abs(rc) <= END_IX_WARN)
       IX_PrintError(rc);
-   else if (abs(rc) <= END_SM_WARN)
-      SM_PrintError(rc);
+   /* else if (abs(rc) <= END_SM_WARN) */
+   /*    SM_PrintError(rc); */
    else if (abs(rc) <= END_QL_WARN)
       QL_PrintError(rc);
    else
@@ -585,7 +585,7 @@ void PrintError(RC rc)
 //
 // Desc: Parse redbase commands
 //
-void RBparse(PF_Manager &pfm, SM_Manager &smm, QL_Manager &qlm)
+void RBparse(PF_Manager &pfm, SM::Manager &smm, QL_Manager &qlm)
 {
    RC rc;
 
