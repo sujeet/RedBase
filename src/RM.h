@@ -133,13 +133,14 @@ private:
   SlotNum current_slot_num;
   Page current_page;
   bool already_unpinned;
+  bool scan_underway;
 
   bool satisfy (const Record& rec) const;
 
 public:
   static const Record end;
 
-  Scan () : already_unpinned (true) {}
+  Scan () : already_unpinned (true), scan_underway (false) {}
   ~Scan () {}
   void open (const FileHandle &fileHandle,
              AttrType    attrType,

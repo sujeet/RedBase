@@ -361,12 +361,17 @@ void Scan::open (const FileHandle &fileHandle,
                  CompOp      compOp,
                  const void* value)
 {
-  if ((attrLength < 0) ||
+  if ((this->scan_underway) ||
+      (attrLength < 0) ||
       (attrType != INT && attrType != FLOAT && attrType != STRING) ||
+      (compOp != NO_OP && compOp != EQ_OP &&
+       compOp != NE_OP && compOp != LT_OP &&
+       compOp != GT_OP && compOp != LE_OP && compOp != GE_OP) ||
       (attrType == INT && attrLength != 4) ||
       (attrType == FLOAT && attrLength != 4) ||
       (attrType == STRING && attrLength > MAXSTRINGLEN) ||
       (compOp == NO_OP && value != NULL) ||
+      (compOp != NO_OP && value == NULL) ||
       (fileHandle.record_size < attrLength + attrOffset))
     throw error::BadArgument ();
 
@@ -379,6 +384,7 @@ void Scan::open (const FileHandle &fileHandle,
   this->current_slot_num = 0;
   this->current_page = fileHandle.GetFirstPage ();
   this->already_unpinned = false;
+  this->scan_underway = true;
 }
 
 bool Scan::satisfy (const Record& rec) const
@@ -464,6 +470,7 @@ Record Scan::next ()
 
 void Scan::close ()
 {
+  this->scan_underway = false;
   if (not this->already_unpinned)
     this->file_handle->UnpinPage (this->current_page);
 }
