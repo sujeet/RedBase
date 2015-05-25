@@ -1,5 +1,5 @@
 //
-// ql_manager_stub.cc
+// ql_manager.cc
 //
 
 // Note that for the SM component (HW3) the QL is actually a
@@ -27,8 +27,8 @@ using namespace std;
 //
 QL_Manager::QL_Manager(SM::Manager &smm, IX::Manager &ixm, RM::Manager &rmm)
 {
-    // Can't stand unused variable warnings!
-    assert (&smm && &ixm && &rmm);
+  // Can't stand unused variable warnings!
+  assert (&smm && &ixm && &rmm);
 }
 
 //
@@ -47,23 +47,23 @@ RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
                       int nRelations, const char * const relations[],
                       int nConditions, const Condition conditions[])
 {
-    int i;
+  int i;
 
-    cout << "Select\n";
+  cout << "Select\n";
 
-    cout << "   nSelAttrs = " << nSelAttrs << "\n";
-    for (i = 0; i < nSelAttrs; i++)
-        cout << "   selAttrs[" << i << "]:" << selAttrs[i] << "\n";
+  cout << "   nSelAttrs = " << nSelAttrs << "\n";
+  for (i = 0; i < nSelAttrs; i++)
+    cout << "   selAttrs[" << i << "]:" << selAttrs[i] << "\n";
 
-    cout << "   nRelations = " << nRelations << "\n";
-    for (i = 0; i < nRelations; i++)
-        cout << "   relations[" << i << "] " << relations[i] << "\n";
+  cout << "   nRelations = " << nRelations << "\n";
+  for (i = 0; i < nRelations; i++)
+    cout << "   relations[" << i << "] " << relations[i] << "\n";
 
-    cout << "   nCondtions = " << nConditions << "\n";
-    for (i = 0; i < nConditions; i++)
-        cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
+  cout << "   nCondtions = " << nConditions << "\n";
+  for (i = 0; i < nConditions; i++)
+    cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
 
-    return 0;
+  return 0;
 }
 
 //
@@ -72,16 +72,16 @@ RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
 RC QL_Manager::Insert(const char *relName,
                       int nValues, const Value values[])
 {
-    int i;
+  int i;
 
-    cout << "Insert\n";
+  cout << "Insert\n";
 
-    cout << "   relName = " << relName << "\n";
-    cout << "   nValues = " << nValues << "\n";
-    for (i = 0; i < nValues; i++)
-        cout << "   values[" << i << "]:" << values[i] << "\n";
+  cout << "   relName = " << relName << "\n";
+  cout << "   nValues = " << nValues << "\n";
+  for (i = 0; i < nValues; i++)
+    cout << "   values[" << i << "]:" << values[i] << "\n";
 
-    return 0;
+  return 0;
 }
 
 //
@@ -90,16 +90,16 @@ RC QL_Manager::Insert(const char *relName,
 RC QL_Manager::Delete(const char *relName,
                       int nConditions, const Condition conditions[])
 {
-    int i;
+  int i;
 
-    cout << "Delete\n";
+  cout << "Delete\n";
 
-    cout << "   relName = " << relName << "\n";
-    cout << "   nCondtions = " << nConditions << "\n";
-    for (i = 0; i < nConditions; i++)
-        cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
+  cout << "   relName = " << relName << "\n";
+  cout << "   nCondtions = " << nConditions << "\n";
+  for (i = 0; i < nConditions; i++)
+    cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
 
-    return 0;
+  return 0;
 }
 
 
@@ -113,22 +113,22 @@ RC QL_Manager::Update(const char *relName,
                       const Value &rhsValue,
                       int nConditions, const Condition conditions[])
 {
-    int i;
+  int i;
 
-    cout << "Update\n";
+  cout << "Update\n";
 
-    cout << "   relName = " << relName << "\n";
-    cout << "   updAttr:" << updAttr << "\n";
-    if (bIsValue)
-        cout << "   rhs is value: " << rhsValue << "\n";
-    else
-        cout << "   rhs is attribute: " << rhsRelAttr << "\n";
+  cout << "   relName = " << relName << "\n";
+  cout << "   updAttr:" << updAttr << "\n";
+  if (bIsValue)
+    cout << "   rhs is value: " << rhsValue << "\n";
+  else
+    cout << "   rhs is attribute: " << rhsRelAttr << "\n";
 
-    cout << "   nCondtions = " << nConditions << "\n";
-    for (i = 0; i < nConditions; i++)
-        cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
+  cout << "   nCondtions = " << nConditions << "\n";
+  for (i = 0; i < nConditions; i++)
+    cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
 
-    return 0;
+  return 0;
 }
 
 //
@@ -139,5 +139,5 @@ RC QL_Manager::Update(const char *relName,
 //
 void QL_PrintError(RC rc)
 {
-    cout << "QL_PrintError\n   rc=" << rc << "\n";
+  cout << "QL_PrintError\n   rc=" << rc << "\n";
 }
