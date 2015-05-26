@@ -83,6 +83,8 @@ public:
 
   void DropIndex  (const char *relName,           // destroy index on
                    const char *attrName);         //   relName.attrName
+  void Insert     (const char* relName,
+                   void* values[]);
   void Load       (const char *relName,           // load relName from
                    const char *fileName);         //   fileName
   void Help       ();                             // Print relations in db

@@ -310,6 +310,75 @@ void Manager::DropIndex(const char *relName,
   this->attrcat.ForcePages ();
 }
 
+void Manager::Insert (const char* relName,
+                      void* values[])
+{
+  // Make sure that the exists.
+  auto table_meta_rec = this->GetTableMetadata (relName);
+  if (table_meta_rec == RM::Scan::end)
+    throw warn::TableDoesNotExist ();
+
+  auto table_rec = this->GetTableMetadata (relName);
+  auto attr_recs = this->GetAttributes (relName);
+  Table* table_meta = (Table *) table_rec.data;
+  DataAttrInfo attrs [table_meta->attr_count];
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    new (attrs + i) DataAttrInfo (*(Attribute *)attr_recs [i].data);
+  }
+  Printer printer (attrs, table_meta->attr_count);
+
+  map<int, IX::IndexHandle> indexes;
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      indexes [attr->index_num] = this->ixm.OpenIndex (relName,
+                                                       attr->index_num);
+    }
+  }
+
+  auto table = this->rmm.OpenFile (relName);
+  char buf [table_meta->row_len];
+
+  RID rid = table.insert (buf); // Just to get an RID
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    switch (attr->type) {
+    case INT:
+      *(int*)(buf + attr->offset) = *(int*)(values [i]);
+      break;
+    case FLOAT:
+      *(float*)(buf + attr->offset) = *(float*)(values [i]);
+      break;
+    case STRING:
+      memset (buf + attr->offset, 0, attr->len);
+      strncpy (buf + attr->offset, (char*)values [i], attr->len);
+      break;
+    case NONE:
+      throw error::UnknownAttributeType ();
+    }
+    if (attr->index_num != -1) {
+      indexes [attr->index_num].Insert (buf + attr->offset, rid);
+    }
+  }
+  auto rec = table.get (rid);
+  memcpy (rec.data, buf, sizeof (buf));
+  table.update (rec);
+
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      this->ixm.CloseIndex (indexes [attr->index_num]);
+    }
+  }
+  printer.PrintHeader (cout);
+  printer.Print (cout, buf);
+  printer.PrintFooter (cout);
+
+  this->rmm.CloseFile (table);
+  this->relcat.ForcePages ();
+  this->attrcat.ForcePages ();
+}
+
 void Manager::Load(const char *relName,
                    const char *fileName)
 {

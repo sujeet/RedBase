@@ -222,14 +222,11 @@ RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
 RC QL_Manager::Insert(const char *relName,
                       int nValues, const Value values[])
 {
-  int i;
-
-  cout << "Insert\n";
-
-  cout << "   relName = " << relName << "\n";
-  cout << "   nValues = " << nValues << "\n";
-  for (i = 0; i < nValues; i++)
-    cout << "   values[" << i << "]:" << values[i] << "\n";
+  void* vals [nValues];
+  for (int i = 0; i < nValues; ++i) {
+    vals [i] = values [i].data;
+  }
+  this->smm->Insert (relName, vals);
 
   return 0;
 }
