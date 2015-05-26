@@ -20,6 +20,11 @@
 // QL_Manager: query language (DML)
 //
 class QL_Manager {
+private:
+  SM::Manager* smm;
+  IX::Manager* ixm;
+  RM::Manager* rmm;
+
 public:
     QL_Manager (SM::Manager &smm, IX::Manager &ixm, RM::Manager &rmm);
     ~QL_Manager();                       // Destructor

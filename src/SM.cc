@@ -18,6 +18,7 @@
 #include "SM.h"
 #include "IX.h"
 #include "RM.h"
+#include "ql.h"
 #include "printer.h"
 
 using namespace std;
@@ -395,16 +396,9 @@ void Manager::Print(const char *relName)
 
   Printer printer (attrs, table->attr_count);
   printer.PrintHeader (cout);
-  // TODO(sujeet): this is just a hack to pass the tests,
-  // because the tests expect a sorted order.
-  vector<RM::Record> recs;
+
   while ((rec = scan.next()) != scan.end) {
-    recs.push_back (rec);
-    // printer.Print (cout, rec.data);
-  }
-  sort (recs.begin(), recs.end(), rec_comp);
-  for (unsigned int i = 0; i < recs.size (); ++i) {
-    printer.Print (cout, recs[i].data);
+    printer.Print (cout, rec.data);
   }
 
   printer.PrintFooter (cout);

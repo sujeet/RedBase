@@ -89,10 +89,13 @@ class FileHandle
 {
   friend class Manager;
   friend class Scan;
+  friend class RelIterator;
 
 private:
   PF::FileHandle pf_file_handle;
+public:
   int record_size;
+private:
   bool header_modified;
   PageNum first_page_num;
 

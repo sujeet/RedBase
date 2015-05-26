@@ -43,6 +43,7 @@ struct Attribute
   AttrType type;
   int len;
   int index_num;
+  Attribute () {}
   Attribute (const char* table_name,
              const char* name,
              int offset,
@@ -64,9 +65,6 @@ private:
   RM::FileHandle relcat;
   RM::FileHandle attrcat;
 
-  RM::Record GetTableMetadata (const char* relName) const;
-  RM::Record GetAttrMetadata (const char* relName,
-                              const char* attrName) const;
   vector<RM::Record> GetAttributes (const char* relName) const;
 
 public:
@@ -94,6 +92,10 @@ public:
 
   void Set        (const char *paramName,         // set parameter to
                    const char *value);            //   value
+
+  RM::Record GetTableMetadata (const char* relName) const;
+  RM::Record GetAttrMetadata (const char* relName,
+                              const char* attrName) const;
 };
 
 #define DECLARE_EXCEPTION(name, message)   \
