@@ -93,6 +93,13 @@ RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
       c.lhsAttr.attrName
     ).data;
     attributes [c.lhsAttr.relName] [c.lhsAttr.attrName] = *a;
+
+    if (not c.bRhsIsAttr) continue;
+    a = (Attribute*) this->smm->GetAttrMetadata (
+      c.rhsAttr.relName,
+      c.rhsAttr.attrName
+    ).data;
+    attributes [c.rhsAttr.relName] [c.rhsAttr.attrName] = *a;
   }
 
   map <string, vector<condition> > cross_table_conditions;
