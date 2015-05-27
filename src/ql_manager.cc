@@ -443,21 +443,158 @@ RC QL_Manager::Update(const char *relName,
                       const Value &rhsValue,
                       int nConditions, const Condition conditions[])
 {
-  int i;
+  map <string, vector <RM::Record> > table_attributes;
+  table_attributes [relName] = this->smm->GetAttributes (relName);
+  int record_size = 0;
 
-  cout << "Update\n";
+  map <string, vector <string> > attr_to_table;
+  for (unsigned int j = 0;
+       j < table_attributes [relName].size();
+       ++j) {
+    Attribute * a = (Attribute *) table_attributes [relName][j].data;
+    record_size += a->len;
+    if (attr_to_table.find (a->name) == attr_to_table.end ()) {
+      vector <string> table_list;
+      attr_to_table [a->name] = table_list;
+    }
+    attr_to_table [a->name].push_back (relName);
+  }
 
-  cout << "   relName = " << relName << "\n";
-  cout << "   updAttr:" << updAttr << "\n";
-  if (bIsValue)
-    cout << "   rhs is value: " << rhsValue << "\n";
-  else
-    cout << "   rhs is attribute: " << rhsRelAttr << "\n";
+  vector <RelAttr> sel_attrs;
+  for (unsigned int j = 0;
+       j < table_attributes [relName].size ();
+       ++j) {
+    RelAttr r;
+    r.attrName = ((Attribute *)table_attributes[relName][j].data)->name;
+    r.relName=((Attribute*)table_attributes[relName][j].data)->table_name;
+    sel_attrs.push_back (r);
+  }
+  
+  map <string, map <string, Attribute> > attributes;
+  map <string, Attribute> m;
+  attributes [relName] = m;
 
-  cout << "   nCondtions = " << nConditions << "\n";
-  for (i = 0; i < nConditions; i++)
-    cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
+  DataAttrInfo attrs [sel_attrs.size()];
+  for (unsigned int i = 0; i < sel_attrs.size(); ++i) {
+    Attribute* a = (Attribute*) this->smm->GetAttrMetadata (
+      sel_attrs [i].relName,
+      sel_attrs [i].attrName
+    ).data;
+    attributes [sel_attrs [i].relName] [sel_attrs [i].attrName] = *a;
 
+    new (attrs + i) DataAttrInfo (*a);
+    string tbl_name (attrs [i].relName);
+    string attr_name (attrs [i].attrName);
+    strcpy (attrs [i].attrName, attr_name.c_str());
+    if (attr_to_table [attr_name].size () != 1)
+      strcpy (attrs [i].relName, tbl_name.c_str());
+  }
+
+  for (int i = 0; i < nConditions; ++i) {
+    Condition c = conditions [i];
+    Attribute* a = (Attribute*) this->smm->GetAttrMetadata (
+      relName,
+      c.lhsAttr.attrName
+    ).data;
+    attributes [relName] [c.lhsAttr.attrName] = *a;
+
+    if (not c.bRhsIsAttr) continue;
+    a = (Attribute*) this->smm->GetAttrMetadata (
+      relName,
+      c.rhsAttr.attrName
+    ).data;
+    attributes [relName] [c.rhsAttr.attrName] = *a;
+  }
+
+  map <string, vector<condition> > single_table_conditions;
+  vector<condition> conds;
+  for (int cond_i = 0; cond_i < nConditions; ++cond_i) {
+    Condition c = conditions [cond_i];
+    if (not c.bRhsIsAttr) {
+      condition cond;
+      Attribute a = attributes [relName] [c.lhsAttr.attrName];
+
+      cond.attr_type = a.type;
+      cond.attr_len = a.len;
+      cond.comp_op = c.op;
+      cond.offset1 = a.offset;
+      cond.has_rhs_attr = false;
+      if (a.type == INT and c.rhsValue.type == STRING)
+        *(int*)c.rhsValue.data = atoi((char*)c.rhsValue.data);
+      else if (a.type == FLOAT and c.rhsValue.type == STRING)
+        *(float*)c.rhsValue.data = atof((char*)c.rhsValue.data);
+      cond.value = c.rhsValue.data;
+
+      conds.push_back (cond);
+    }
+    else {
+      condition cond;
+      Attribute a1 = attributes [relName] [c.lhsAttr.attrName];
+      Attribute a2 = attributes [relName] [c.rhsAttr.attrName];
+            
+      assert (a1.type == a2.type);
+      assert (a1.len == a2.len);
+
+      cond.attr_type = a1.type;
+      cond.attr_len = a1.len;
+      cond.comp_op = c.op;
+      cond.offset1 = a1.offset;
+      cond.offset2 = a2.offset;
+      cond.has_rhs_attr = true;
+
+      conds.push_back (cond);
+    }
+  }
+  single_table_conditions [relName] = conds;
+
+  auto iter = new RelIterator (relName,
+                               single_table_conditions [relName],
+                               this->rmm,
+                               this->ixm,
+                               this->smm);
+  Printer printer (attrs, sel_attrs.size());
+  printer.PrintHeader (cout);
+
+  Attribute* attr_to_update = (Attribute *) this->smm->GetAttrMetadata (
+    relName,
+    updAttr.attrName
+  ).data;
+
+  char* rec;
+  vector <char*> recs_to_insert;
+
+  iter->open();
+  while ((rec = iter->next()) != NULL) {
+    char* new_rec = new char [record_size];
+    memcpy (new_rec, rec, record_size);
+    if (bIsValue) {
+      memcpy (new_rec + attr_to_update->offset,
+              rhsValue.data,
+              attr_to_update->len);
+    }
+    else {
+      Attribute* attr_to_copy = (Attribute *) this->smm->GetAttrMetadata (
+        relName,
+        rhsRelAttr.attrName
+      ).data;
+      memcpy (new_rec + attr_to_update->offset,
+              new_rec + attr_to_copy->offset,
+              attr_to_update->len);
+    }
+    recs_to_insert.push_back (new_rec);
+
+    printer.Print (cout, new_rec);
+    this->smm->Delete (relName, rec, iter->rid());
+  }
+  iter->close();
+
+  for (unsigned int i = 0; i < recs_to_insert.size (); ++i) {
+    this->smm->Insert (relName, recs_to_insert [i]);
+    delete [] recs_to_insert [i];
+  }
+
+  printer.PrintFooter (cout);
+  delete iter;
   return 0;
 }
 

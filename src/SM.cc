@@ -357,6 +357,50 @@ void Manager::Delete (const char* relName,
 }
 
 void Manager::Insert (const char* relName,
+                      const char* rec_data)
+{
+  auto table_meta_rec = this->GetTableMetadata (relName);
+  if (table_meta_rec == RM::Scan::end)
+    throw warn::TableDoesNotExist ();
+
+  auto table_rec = this->GetTableMetadata (relName);
+  auto attr_recs = this->GetAttributes (relName);
+  Table* table_meta = (Table *) table_rec.data;
+
+  map<int, IX::IndexHandle> indexes;
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      indexes [attr->index_num] = this->ixm.OpenIndex (relName,
+                                                       attr->index_num);
+    }
+  }
+
+  auto table = this->rmm.OpenFile (relName);
+
+  RID rid = table.insert (rec_data); // Just to get an RID
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      indexes [attr->index_num].Insert (rec_data + attr->offset, rid);
+    }
+  }
+  auto rec = table.get (rid);
+  memcpy (rec.data, rec_data, table_meta->row_len);
+  table.update (rec);
+
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      this->ixm.CloseIndex (indexes [attr->index_num]);
+    }
+  }
+
+  this->rmm.CloseFile (table);
+  this->relcat.ForcePages ();
+  this->attrcat.ForcePages ();
+}
+void Manager::Insert (const char* relName,
                       void* values[])
 {
   auto table_meta_rec = this->GetTableMetadata (relName);
@@ -415,6 +459,7 @@ void Manager::Insert (const char* relName,
       this->ixm.CloseIndex (indexes [attr->index_num]);
     }
   }
+
   printer.PrintHeader (cout);
   printer.Print (cout, buf);
   printer.PrintFooter (cout);

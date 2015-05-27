@@ -83,6 +83,8 @@ public:
                    const char *attrName);         //   relName.attrName
   void Insert     (const char* relName,
                    void* values[]);
+  void Insert     (const char* relName,
+                   const char* rec_data);
   void Delete     (const char* relName,
                    char* rec_data,
                    RID rid);
