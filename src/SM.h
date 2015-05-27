@@ -65,8 +65,6 @@ private:
   RM::FileHandle relcat;
   RM::FileHandle attrcat;
 
-  vector<RM::Record> GetAttributes (const char* relName) const;
-
 public:
   Manager    (IX::Manager &ixm, RM::Manager &rmm);
   ~Manager   ();                             // Destructor
@@ -85,6 +83,9 @@ public:
                    const char *attrName);         //   relName.attrName
   void Insert     (const char* relName,
                    void* values[]);
+  void Delete     (const char* relName,
+                   char* rec_data,
+                   RID rid);
   void Load       (const char *relName,           // load relName from
                    const char *fileName);         //   fileName
   void Help       ();                             // Print relations in db
@@ -98,6 +99,7 @@ public:
   RM::Record GetTableMetadata (const char* relName) const;
   RM::Record GetAttrMetadata (const char* relName,
                               const char* attrName) const;
+  vector<RM::Record> GetAttributes (const char* relName) const;
 };
 
 #define DECLARE_EXCEPTION(name, message)   \
@@ -140,4 +142,3 @@ DECLARE_WARNING (BadCSVFile, "Error opening CSV file.");
 }  // namespace SM
 
 #endif
-

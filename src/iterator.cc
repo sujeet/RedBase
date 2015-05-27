@@ -31,6 +31,11 @@ void RelIterator::reset ()
   this->scan.open (this->rel, INT, 4, 0, NO_OP, NULL);
 }
 
+RID RelIterator::rid ()
+{
+  return this->rid_;
+}
+
 char* RelIterator::next ()
 {
   RM::Record rec;
@@ -41,6 +46,7 @@ char* RelIterator::next ()
     }
     if (match_found) {
       memcpy (this->tuple_buffer, rec.data, this->tuple_size ());
+      this->rid_ = rec.rid;
       return this->tuple_buffer;
     }
   }

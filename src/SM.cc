@@ -310,10 +310,55 @@ void Manager::DropIndex(const char *relName,
   this->attrcat.ForcePages ();
 }
 
+void Manager::Delete (const char* relName,
+                      char* rec_data,
+                      RID rid) 
+{
+  auto table_meta_rec = this->GetTableMetadata (relName);
+  if (table_meta_rec == RM::Scan::end)
+    throw warn::TableDoesNotExist ();
+
+  auto attr_recs = this->GetAttributes (relName);
+
+  map<int, IX::IndexHandle> indexes;
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      indexes [attr->index_num] = this->ixm.OpenIndex (relName,
+                                                       attr->index_num);
+    }
+  }
+
+  // Delete from the file.
+  auto table = this->rmm.OpenFile (relName);
+  table.Delete (rid);
+
+  // Close file.
+  this->rmm.CloseFile (table);
+
+  // Delete from the indexes.
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      indexes [attr->index_num].Insert (rec_data + attr->offset, rid);
+    }
+  }
+
+  // Close indexes.
+  for (unsigned int i = 0; i < attr_recs.size (); ++i) {
+    Attribute* attr = (Attribute *) attr_recs [i].data;
+    if (attr->index_num != -1) {
+      this->ixm.CloseIndex (indexes [attr->index_num]);
+    }
+  }
+
+  this->relcat.ForcePages ();
+  this->attrcat.ForcePages ();
+}
+
 void Manager::Insert (const char* relName,
                       void* values[])
 {
-  // Make sure that the exists.
   auto table_meta_rec = this->GetTableMetadata (relName);
   if (table_meta_rec == RM::Scan::end)
     throw warn::TableDoesNotExist ();

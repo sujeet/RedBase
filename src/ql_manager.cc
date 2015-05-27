@@ -14,6 +14,7 @@
 #include <unistd.h>
 #include <string>
 #include <map>
+#include <set>
 #include "redbase.h"
 #include "ql.h"
 #include "SM.h"
@@ -46,24 +47,68 @@ QL_Manager::~QL_Manager()
 }
 
 //
-// Handle the select clause
+// Handle the selecteclnuse
 //
 RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
                       int nRelations, const char * const relations[],
-                      int nConditions, const Condition conditions[])
+                      int nConditions, Condition conditions[])
 {
-  // In the resulting big tuple, calculate the individual tuple offsets.
   int tuple_offsets [nRelations];
   tuple_offsets [0] = 0;
+  map <string, vector <RM::Record> > table_attributes;
+  set <string> source_relations;
+  for (int i = 0; i < nRelations; ++i) {
+    if (source_relations.find (relations [i]) != source_relations.end()) {
+      cout << "Table " << relations [i] << " appears multiple times." << endl;
+      return 184;
+    }
+    source_relations.insert (relations [i]);
+  }
   for (int i = 1; i < nRelations; ++i) {
     Table* tbl = (Table *) this->smm->GetTableMetadata (relations [i-1]).data;
+    table_attributes [relations [i-1]] =
+      this->smm->GetAttributes (relations [i-1]);
     tuple_offsets [i] = tuple_offsets [i-1] + tbl->row_len;
   }
+  table_attributes [relations [nRelations - 1]] =
+    this->smm->GetAttributes (relations [nRelations - 1]);
+  map <string, vector <string> > attr_to_table;
   map <string, int> tuple_offsets_map;
   for (int i = 0; i < nRelations; ++i) {
     tuple_offsets_map [relations [i]] = tuple_offsets [i];
+    for (unsigned int j = 0;
+         j < table_attributes [relations [i]].size();
+         ++j) {
+      char* a_name = ((Attribute *)table_attributes[relations[i]][j].data)->name;
+      if (attr_to_table.find (a_name) == attr_to_table.end ()) {
+        vector <string> table_list;
+        attr_to_table [a_name] = table_list;
+      }
+      attr_to_table [a_name].push_back (relations [i]);
+    }
   }
 
+  vector <RelAttr> sel_attrs;
+  if (nSelAttrs == 1 and selAttrs[0].attrName[0] == '*') {
+    for (int i = 0; i < nRelations; ++i) {
+      for (unsigned int j = 0;
+           j < table_attributes [relations [i]].size ();
+           ++j) {
+        RelAttr r;
+        r.attrName = ((Attribute *)table_attributes[relations[i]][j].data)->name;
+        r.relName=((Attribute*)table_attributes[relations[i]][j].data)->table_name;
+        sel_attrs.push_back (r);
+      }
+    }
+  }
+  else {
+    for (int i = 0; i < nSelAttrs; ++i) {
+      RelAttr r = selAttrs [i];
+      if (r.relName == NULL)
+        r.relName = attr_to_table [r.attrName][0].c_str();
+      sel_attrs.push_back (r);
+    }
+  }
   
   map <string, map <string, Attribute> > attributes;
   for (int i = 0; i < nRelations; ++i) {
@@ -71,19 +116,42 @@ RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
     attributes [relations [i]] = m;
   }
 
-  DataAttrInfo attrs [nSelAttrs];
-  for (int i = 0; i < nSelAttrs; ++i) {
+
+  for (unsigned int i = 0; i < sel_attrs.size(); ++i) {
+    if (source_relations.find (sel_attrs [i].relName) == source_relations.end ()) {
+      cout << "Table " << sel_attrs [i].relName << " not in FROM clause." << endl;
+      return 184;
+    }
+  }
+
+  DataAttrInfo attrs [sel_attrs.size()];
+  for (unsigned int i = 0; i < sel_attrs.size(); ++i) {
     Attribute* a = (Attribute*) this->smm->GetAttrMetadata (
-      selAttrs [i].relName,
-      selAttrs [i].attrName
+      sel_attrs [i].relName,
+      sel_attrs [i].attrName
     ).data;
-    attributes [selAttrs [i].relName] [selAttrs [i].attrName] = *a;
+    attributes [sel_attrs [i].relName] [sel_attrs [i].attrName] = *a;
 
     new (attrs + i) DataAttrInfo (*a);
     string tbl_name (attrs [i].relName);
     string attr_name (attrs [i].attrName);
     attrs [i].offset += tuple_offsets_map [tbl_name];
-    strcpy (attrs [i].attrName, (tbl_name + '.' + attr_name).c_str());
+    strcpy (attrs [i].attrName, attr_name.c_str());
+    if (attr_to_table [attr_name].size () != 1)
+      strcpy (attrs [i].relName, tbl_name.c_str());
+  }
+
+  for (int i = 0; i < nConditions; ++i) {
+    Condition* c = conditions + i;
+    if (c->lhsAttr.relName == NULL) {
+      c->lhsAttr.relName = attr_to_table [c->lhsAttr.attrName][0].c_str();
+    }
+
+    if (not c->bRhsIsAttr) continue;
+
+    if (c->rhsAttr.relName == NULL) {
+      c->rhsAttr.relName = attr_to_table [c->rhsAttr.attrName][0].c_str();
+    }
   }
 
   for (int i = 0; i < nConditions; ++i) {
@@ -157,6 +225,10 @@ RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
           cond.comp_op = c.op;
           cond.offset1 = a.offset;
           cond.has_rhs_attr = false;
+          if (a.type == INT and c.rhsValue.type == STRING)
+            *(int*)c.rhsValue.data = atoi((char*)c.rhsValue.data);
+          else if (a.type == FLOAT and c.rhsValue.type == STRING)
+            *(float*)c.rhsValue.data = atof((char*)c.rhsValue.data);
           cond.value = c.rhsValue.data;
 
           conds.push_back (cond);
@@ -201,7 +273,7 @@ RC QL_Manager::Select(int nSelAttrs, const RelAttr selAttrs[],
       cross_table_conditions [relations [i]]
     );
   }
-  Printer printer (attrs, nSelAttrs);
+  Printer printer (attrs, sel_attrs.size());
   printer.PrintHeader (cout);
 
   char* rec;
@@ -237,15 +309,126 @@ RC QL_Manager::Insert(const char *relName,
 RC QL_Manager::Delete(const char *relName,
                       int nConditions, const Condition conditions[])
 {
-  int i;
+  map <string, vector <RM::Record> > table_attributes;
+  table_attributes [relName] = this->smm->GetAttributes (relName);
 
-  cout << "Delete\n";
+  map <string, vector <string> > attr_to_table;
+  for (unsigned int j = 0;
+       j < table_attributes [relName].size();
+       ++j) {
+    char* a_name = ((Attribute *)table_attributes[relName][j].data)->name;
+    if (attr_to_table.find (a_name) == attr_to_table.end ()) {
+      vector <string> table_list;
+      attr_to_table [a_name] = table_list;
+    }
+    attr_to_table [a_name].push_back (relName);
+  }
 
-  cout << "   relName = " << relName << "\n";
-  cout << "   nCondtions = " << nConditions << "\n";
-  for (i = 0; i < nConditions; i++)
-    cout << "   conditions[" << i << "]:" << conditions[i] << "\n";
+  vector <RelAttr> sel_attrs;
+  for (unsigned int j = 0;
+       j < table_attributes [relName].size ();
+       ++j) {
+    RelAttr r;
+    r.attrName = ((Attribute *)table_attributes[relName][j].data)->name;
+    r.relName=((Attribute*)table_attributes[relName][j].data)->table_name;
+    sel_attrs.push_back (r);
+  }
+  
+  map <string, map <string, Attribute> > attributes;
+  map <string, Attribute> m;
+  attributes [relName] = m;
 
+  DataAttrInfo attrs [sel_attrs.size()];
+  for (unsigned int i = 0; i < sel_attrs.size(); ++i) {
+    Attribute* a = (Attribute*) this->smm->GetAttrMetadata (
+      sel_attrs [i].relName,
+      sel_attrs [i].attrName
+    ).data;
+    attributes [sel_attrs [i].relName] [sel_attrs [i].attrName] = *a;
+
+    new (attrs + i) DataAttrInfo (*a);
+    string tbl_name (attrs [i].relName);
+    string attr_name (attrs [i].attrName);
+    strcpy (attrs [i].attrName, attr_name.c_str());
+    if (attr_to_table [attr_name].size () != 1)
+      strcpy (attrs [i].relName, tbl_name.c_str());
+  }
+
+  for (int i = 0; i < nConditions; ++i) {
+    Condition c = conditions [i];
+    Attribute* a = (Attribute*) this->smm->GetAttrMetadata (
+      relName,
+      c.lhsAttr.attrName
+    ).data;
+    attributes [relName] [c.lhsAttr.attrName] = *a;
+
+    if (not c.bRhsIsAttr) continue;
+    a = (Attribute*) this->smm->GetAttrMetadata (
+      relName,
+      c.rhsAttr.attrName
+    ).data;
+    attributes [relName] [c.rhsAttr.attrName] = *a;
+  }
+
+  map <string, vector<condition> > single_table_conditions;
+  vector<condition> conds;
+  for (int cond_i = 0; cond_i < nConditions; ++cond_i) {
+    Condition c = conditions [cond_i];
+    if (not c.bRhsIsAttr) {
+      condition cond;
+      Attribute a = attributes [relName] [c.lhsAttr.attrName];
+
+      cond.attr_type = a.type;
+      cond.attr_len = a.len;
+      cond.comp_op = c.op;
+      cond.offset1 = a.offset;
+      cond.has_rhs_attr = false;
+      if (a.type == INT and c.rhsValue.type == STRING)
+        *(int*)c.rhsValue.data = atoi((char*)c.rhsValue.data);
+      else if (a.type == FLOAT and c.rhsValue.type == STRING)
+        *(float*)c.rhsValue.data = atof((char*)c.rhsValue.data);
+      cond.value = c.rhsValue.data;
+
+      conds.push_back (cond);
+    }
+    else {
+      condition cond;
+      Attribute a1 = attributes [relName] [c.lhsAttr.attrName];
+      Attribute a2 = attributes [relName] [c.rhsAttr.attrName];
+            
+      assert (a1.type == a2.type);
+      assert (a1.len == a2.len);
+
+      cond.attr_type = a1.type;
+      cond.attr_len = a1.len;
+      cond.comp_op = c.op;
+      cond.offset1 = a1.offset;
+      cond.offset2 = a2.offset;
+      cond.has_rhs_attr = true;
+
+      conds.push_back (cond);
+    }
+  }
+  single_table_conditions [relName] = conds;
+
+  auto iter = new RelIterator (relName,
+                               single_table_conditions [relName],
+                               this->rmm,
+                               this->ixm,
+                               this->smm);
+  Printer printer (attrs, sel_attrs.size());
+  printer.PrintHeader (cout);
+
+  char* rec;
+  iter->open();
+  while ((rec = iter->next()) != NULL) {
+    printer.Print (cout, rec);
+    this->smm->Delete (relName, rec, iter->rid());
+  }
+  iter->close();
+
+  printer.PrintFooter (cout);
+  delete iter;
   return 0;
 }
 

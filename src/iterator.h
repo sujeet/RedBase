@@ -37,6 +37,7 @@ class RelIterator: public virtual Iterator
 {
 private:
   char* tuple_buffer;
+  RID rid_;
   RM::Scan scan;
   RM::FileHandle rel;
   RM::Manager* rmm;
@@ -55,6 +56,7 @@ public:
   void close ();
   int tuple_size () const;
   void reset ();
+  RID rid();
 };
 
 class CompositeIterator: public virtual Iterator

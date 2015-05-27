@@ -20,8 +20,8 @@ struct AttrInfo{
 };
 
 struct RelAttr{
-    char     *relName;    // Relation name (may be NULL)
-    char     *attrName;   // Attribute name
+    const char     *relName;    // Relation name (may be NULL)
+    const char     *attrName;   // Attribute name
 
     // Print function
     friend std::ostream &operator<<(std::ostream &s, const RelAttr &ra);

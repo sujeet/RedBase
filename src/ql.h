@@ -34,7 +34,7 @@ public:
         int   nRelations,                // # relations in from clause
         const char * const relations[],  // relations in from clause
         int   nConditions,               // # conditions in where clause
-        const Condition conditions[]);   // conditions in where clause
+        Condition conditions[]);         // conditions in where clause
 
     RC Insert  (const char *relName,     // relation to insert into
         int   nValues,                   // # values
