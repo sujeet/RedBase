@@ -5,6 +5,7 @@
 #include "rm_rid.h"
 #include "Array.h"
 #include "bitmap.h"
+#include "Blob.h"
 
 namespace RM
 {
@@ -173,6 +174,7 @@ public:
   Manager (PF_Manager &pfm);
   
   int MakeBlob (const char* relName, const char *fileName);
+  Blob GetBlob (const char* relName, int blob_id);
   void CreateFile (const char* fileName, int record_size);
   void DestroyFile (const char *fileName);
   FileHandle OpenFile (const char *fileName);

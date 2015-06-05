@@ -668,16 +668,17 @@ static void echo_query(NODE *n)
          break;
       case N_UPDATE:            /* for Update() */
          {
+           if (not n->u.UPDATE.blob_updator) {
             printf("update %s set ",n->u.UPDATE.relname);
             print_relattr(n->u.UPDATE.relattr);
             printf(" = ");
             struct node *rhs = n->u.UPDATE.relorvalue;
 
             /* The RHS can be either a relation.attribute or a value */
-            if (rhs->u.RELATTR_OR_VALUE.relattr) {
+            if (rhs && rhs->u.RELATTR_OR_VALUE.relattr) {
                /* Print out the relation.attribute */
                print_relattr(rhs->u.RELATTR_OR_VALUE.relattr);
-            } else {
+            } else if (rhs) {
                /* Print out the value */
                print_value(rhs->u.RELATTR_OR_VALUE.value);
             }
@@ -686,7 +687,19 @@ static void echo_query(NODE *n)
                print_conditions(n->u.UPDATE.conditionlist);
             }
             printf(";\n");
-            break;
+           }
+           else {
+            printf("update %s set ",n->u.UPDATE.relname);
+            printf ("%s(", n->u.UPDATE.blob_updator);
+            print_relattr(n->u.UPDATE.relattr);
+            printf(" ) ");
+            if (n->u.UPDATE.conditionlist) {
+               printf("where ");
+               print_conditions(n->u.UPDATE.conditionlist);
+            }
+            printf(";\n");
+           }
+           break;
          }
       default:   // should never get here
          break;

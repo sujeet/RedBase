@@ -64,6 +64,8 @@ private:
   RM::Manager rmm;
   RM::FileHandle relcat;
   RM::FileHandle attrcat;
+
+public:
   vector<void*> libraries;
 
 public:

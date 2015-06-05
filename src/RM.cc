@@ -51,6 +51,12 @@ const string make_blob_name (const char* relName, int blob_number)
   return blob_file_name;
 }
 
+Blob Manager::GetBlob (const char* relName, int blob_id)
+{
+  Blob b (&this->pfm, blob_id, relName);
+  return b;
+}
+
 int Manager::MakeBlob (const char *relName, const char *fileName)
 {
   // Get the next available blob number,

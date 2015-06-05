@@ -328,7 +328,7 @@ load
    ;
 
 loadlib
-   : RW_LOADLIB T_STRING
+   : RW_LOADLIB T_QSTRING
    {
       $$ = loadlib_node($2);
    }

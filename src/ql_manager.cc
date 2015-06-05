@@ -10,6 +10,7 @@
 #include <iostream>
 #include <sys/times.h>
 #include <sys/types.h>
+#include <dlfcn.h>
 #include <cassert>
 #include <unistd.h>
 #include <string>
@@ -22,6 +23,8 @@
 #include "RM.h"
 #include "printer.h"
 #include "iterator.h"
+#include "Blob.h"
+#include "imagelib.h"
 
 using namespace std;
 
@@ -432,6 +435,14 @@ RC QL_Manager::Delete(const char *relName,
   return 0;
 }
 
+void textprint (Blob& blob)
+{
+  int len = blob.size();
+  void* data = malloc (len);
+  blob.read (data, len, 0);
+  cout << (char*) data << endl;
+  free (data);
+}
 
 //
 // Update from the relName all tuples that satisfy conditions
@@ -573,8 +584,32 @@ RC QL_Manager::Update(const char *relName,
         // calling a function on the blob.
         string val ((const char*)rhsValue.data);
         if (val.find ('.') == string::npos) {
-          // Not a filename
-          // TODO
+          // Not a filename, this is an in-place update function.
+          void (*updator) (Blob&);
+          bool updated = false;
+          updated = true;
+          for (unsigned int i = 0; i < this->smm->libraries.size(); ++i) {
+            cout << "trying to load " << val.c_str() << endl;
+            dlerror();
+            *(void **)(&updator) = dlsym (this->smm->libraries[i], val.c_str());
+            char* error;
+            if ((error = dlerror()) != NULL) continue;
+            else {
+              int* blob_id = (int*)(rec + attr_to_update->offset);
+              Blob b = this->rmm->GetBlob (
+                relName,
+                *blob_id
+              );
+              cout << "calling updator" << endl;
+              // textprint(b);
+              (*updators["textprint"])(b);
+              updated = true;
+            }
+          }
+          if (not updated) {
+            cout << "Function " << val << " not found." << endl;
+            return 199;
+          }
         }
         else {
           int blob_id = this->rmm->MakeBlob (relName, val.c_str());

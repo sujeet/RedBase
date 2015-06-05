@@ -21,7 +21,7 @@ LEX            = flex
 # -O1 - Basic optimization
 # -Wall - All warnings
 # -DDEBUG_PF - This turns on the LOG file for lots of BufferMgr info
-CFLAGS         = -g -O1 -Wall $(STATS_OPTION) $(INC_DIRS) -std=c++11
+CFLAGS         = -g -O1 -Wall $(STATS_OPTION) $(INC_DIRS) -std=c++11 -fPIC
 
 # The STATS_OPTION can be set to -DPF_STATS or to nothing to turn on and
 # off buffer manager statistics.  The student should not modify this
@@ -37,7 +37,7 @@ PF_SOURCES     = pf_buffermgr.cc pf_error.cc pf_filehandle.cc \
 RM_SOURCES     = RM.cc rm.cc bitmap.cc rm_rid.cc
 IX_SOURCES     = IX.cc ix.cc Array.cc
 SM_SOURCES     = SM.cc printer.cc
-QL_SOURCES     = ql_manager.cc iterator.cc
+QL_SOURCES     = ql_manager.cc iterator.cc Blob.cc imagelib.cc
 UTILS_SOURCES  = dbcreate.cc dbdestroy.cc redbase.cc
 PARSER_SOURCES = scan.c parse.c nodes.c interp.c
 TESTER_SOURCES = pf_test1.cc pf_test2.cc pf_test3.cc \
@@ -143,4 +143,4 @@ $(OBJECTS): %.o:
 
 $(EXECUTABLES): %: $(BUILD_DIR)%.o $(LIBRARIES)
 	$(CC) $(CFLAGS) $< -o $@ -L$(LIB_DIR) $(LIBS)
-
+	# g++ -g -shared -o imagelib.so -fPIC imagelib.cc -L$(LIB_DIR) -lql -lpf

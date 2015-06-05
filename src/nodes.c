@@ -253,6 +253,7 @@ NODE *update_node(char *relname, NODE *relattr, char *blob_updator,
     n->u.UPDATE.relattr = relattr;
     n->u.UPDATE.blob_updator = blob_updator;
     n->u.UPDATE.conditionlist = conditionlist;
+    n->u.UPDATE.relorvalue = NULL;
     return n;
 }
 
