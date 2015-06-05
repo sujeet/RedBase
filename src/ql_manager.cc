@@ -568,9 +568,26 @@ RC QL_Manager::Update(const char *relName,
     char* new_rec = new char [record_size];
     memcpy (new_rec, rec, record_size);
     if (bIsValue) {
-      memcpy (new_rec + attr_to_update->offset,
-              rhsValue.data,
-              attr_to_update->len);
+      if (attr_to_update->type == BLOB) {
+        // Figure out whether we are setting a new file or we are
+        // calling a function on the blob.
+        string val ((const char*)rhsValue.data);
+        if (val.find ('.') == string::npos) {
+          // Not a filename
+          // TODO
+        }
+        else {
+          int blob_id = this->rmm->MakeBlob (relName, val.c_str());
+          memcpy (new_rec + attr_to_update->offset,
+                  &blob_id,
+                  attr_to_update->len);
+        }
+      }
+      else {
+        memcpy (new_rec + attr_to_update->offset,
+                rhsValue.data,
+                attr_to_update->len);
+      }
     }
     else {
       Attribute* attr_to_copy = (Attribute *) this->smm->GetAttrMetadata (

@@ -240,6 +240,7 @@ NODE *update_node(char *relname, NODE *relattr, NODE *relorvalue,
     n->u.UPDATE.relattr = relattr;
     n->u.UPDATE.relorvalue = relorvalue;
     n->u.UPDATE.conditionlist = conditionlist;
+    n->u.UPDATE.blob_updator = NULL;
     return n;
 }
 
@@ -282,6 +283,7 @@ NODE *condition_node(NODE *lhsRelattr, CompOp op, NODE *rhsRelattrOrValue)
       rhsRelattrOrValue->u.RELATTR_OR_VALUE.relattr;
     n->u.CONDITION.rhsValue = 
       rhsRelattrOrValue->u.RELATTR_OR_VALUE.value;
+    n->u.CONDITION.blob_filter = NULL;
     return n;
 }
 

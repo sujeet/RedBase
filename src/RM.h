@@ -16,6 +16,9 @@ struct PageHdr
 {
   int num_records;
   PageNum next_page;
+
+  /* This field is relevant only for header pages */
+  int next_blob_id_available;
 };
 
 
@@ -41,6 +44,7 @@ class Page
 {
   friend class FileHandle;
   friend class Scan;
+  friend class Manager;
 
 private:
   PF::PageHandle pf_page;
@@ -79,9 +83,11 @@ public:
 
   int GetRecordSize () const;
   void SetRecordSize (int record_size);
+  int GetNextAvailableBlobId () const;
 
   PageNum GetFirstPageNum () const;
   void SetFirstPageNum (PageNum first_page_num);
+  void SetNextAvailableBlobId (int next_available_blob_id);
 };
 
 
@@ -98,6 +104,7 @@ public:
 private:
   bool header_modified;
   PageNum first_page_num;
+  int next_blob_id_available;
 
 public:
   FileHandle ();
@@ -165,6 +172,7 @@ public:
   Manager (PF::Manager &pfm);
   Manager (PF_Manager &pfm);
   
+  int MakeBlob (const char* relName, const char *fileName);
   void CreateFile (const char* fileName, int record_size);
   void DestroyFile (const char *fileName);
   FileHandle OpenFile (const char *fileName);

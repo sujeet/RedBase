@@ -406,6 +406,7 @@ void Manager::Insert (const char* relName,
   this->relcat.ForcePages ();
   this->attrcat.ForcePages ();
 }
+
 void Manager::Insert (const char* relName,
                       void* values[])
 {
@@ -434,6 +435,7 @@ void Manager::Insert (const char* relName,
   auto table = this->rmm.OpenFile (relName);
   char buf [table_meta->row_len];
 
+  int blob_number;
   RID rid = table.insert (buf); // Just to get an RID
   for (unsigned int i = 0; i < attr_recs.size (); ++i) {
     Attribute* attr = (Attribute *) attr_recs [i].data;
@@ -447,6 +449,10 @@ void Manager::Insert (const char* relName,
     case STRING:
       memset (buf + attr->offset, 0, attr->len);
       strncpy (buf + attr->offset, (char*)values [i], attr->len);
+      break;
+    case BLOB:
+      blob_number = this->rmm.MakeBlob (relName, (char*)values [i]);
+      *(int*)(buf + attr->offset) = blob_number;
       break;
     case NONE:
       throw error::UnknownAttributeType ();
@@ -503,6 +509,7 @@ void Manager::Load(const char *relName,
   while (in.good ()) {
     vector<string> row = csv_read_row (in, ',');
     RID rid = table.insert (buf); // Just to get an RID
+    int blob_number;
     for (unsigned int i = 0; i < attr_recs.size (); ++i) {
       Attribute* attr = (Attribute *) attr_recs [i].data;
       switch (attr->type) {
@@ -515,6 +522,10 @@ void Manager::Load(const char *relName,
       case STRING:
         memset (buf + attr->offset, 0, attr->len);
         strncpy (buf + attr->offset, row [i].c_str(), attr->len);
+        break;
+      case BLOB:
+        blob_number = this->rmm.MakeBlob (relName, row [i].c_str());
+        *(int*)(buf + attr->offset) = blob_number;
         break;
       case NONE:
         throw error::UnknownAttributeType ();
@@ -567,7 +578,7 @@ void Manager::Print(const char *relName)
   RM::Scan scan;
   RM::Record rec;
   auto relation = this->rmm.OpenFile (relName);
-  scan.open (relation, STRING, MAXNAME + 1, 0, NO_OP, NULL);
+  scan.open (relation, INT, sizeof (int), 0, NO_OP, NULL);
 
   Printer printer (attrs, table->attr_count);
   printer.PrintHeader (cout);

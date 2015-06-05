@@ -49,7 +49,7 @@ static int mk_relations(NODE *list, int max, char *relations[]);
 static int mk_conditions(NODE *list, int max, Condition conditions[]);
 static int mk_values(NODE *list, int max, Value values[]);
 static void mk_value(NODE *node, Value &value);
-static void mk_value(char *blob_updator, Value &value);
+static void mk_value_blob_updator(char *blob_updator, Value &value);
 static void print_error(char *errmsg, RC errval);
 static void echo_query(NODE *n);
 static void print_attrtypes(NODE *n);
@@ -253,7 +253,7 @@ RC interp(NODE *n)
               }
             }
             else {
-              mk_value(blob_updator, rhsValue);
+              mk_value_blob_updator(blob_updator, rhsValue);
               bIsValue = 1;
             }
 
@@ -420,7 +420,8 @@ static int mk_conditions(NODE *list, int max, Condition conditions[])
       }
       else {
         conditions[i].bRhsIsAttr = FALSE;
-        mk_value(current->u.CONDITION.blob_filter, conditions[i].rhsValue);
+        mk_value_blob_updator (current->u.CONDITION.blob_filter,
+                               conditions[i].rhsValue);
       }
    }
 
@@ -450,7 +451,7 @@ static int mk_values(NODE *list, int max, Value values[])
    return i;
 }
 
-static void mk_value(char *blob_updator, Value &value)
+static void mk_value_blob_updator(char *blob_updator, Value &value)
 {
   value.data = (void *) blob_updator;
   value.type = BLOB;

@@ -188,7 +188,7 @@ void Printer::Print(ostream &c, const void * const data[])
                     Spaces(attributes[i].attrLength, strlen(str));
             }
         }
-        if (attributes[i].attrType == INT) {
+        if (attributes[i].attrType == INT || attributes[i].attrType == BLOB) {
             memcpy (&a, data[i], sizeof(int));
             sprintf(strSpace, "%d",a);
             c << a;
@@ -252,7 +252,7 @@ void Printer::Print(ostream &c, const char * const data)
                     Spaces(attributes[i].attrLength, strlen(str));
             }
         }
-        if (attributes[i].attrType == INT) {
+        if (attributes[i].attrType == INT || attributes[i].attrType == BLOB) {
             memcpy (&a, (data+attributes[i].offset), sizeof(int));
             sprintf(strSpace, "%d",a);
             c << a;

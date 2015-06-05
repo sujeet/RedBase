@@ -1,5 +1,6 @@
 #include <cstring>
 #include <cassert>
+#include <fstream>
 
 #include "RM.h"
 
@@ -43,6 +44,64 @@ Manager::Manager (PF::Manager &pfm)
 Manager::Manager (PF_Manager &pfm)
   : pfm (pfm) {}
   
+const string make_blob_name (const char* relName, int blob_number)
+{
+  string blob_file_name (relName);
+  blob_file_name += ".blob." + std::to_string (blob_number);
+  return blob_file_name;
+}
+
+int Manager::MakeBlob (const char *relName, const char *fileName)
+{
+  // Get the next available blob number,
+  // so that we can appropriately name the PF file.
+  auto rel = this->OpenFile (relName);
+  auto header_page = rel.GetFirstPage ();
+  int blob_number = rel.next_blob_id_available++;
+  rel.header_modified = true;
+  rel.DoneWritingTo (header_page);
+  rel.ForcePages ();
+  this->CloseFile (rel);
+
+  // Make a new pf file, write data to it.
+  auto blob_file_name = make_blob_name(relName, blob_number);
+  this->pfm.CreateFile (blob_file_name);
+  auto blob_file = this->pfm.OpenFile (blob_file_name);
+
+  ifstream infile;
+  string file_name (fileName);
+  file_name = "../" + file_name;
+  infile.open(file_name, ios::binary | ios::in);
+
+  // Get the length of the input file
+  infile.seekg (0, infile.end);
+  int length = infile.tellg();
+  infile.seekg (0, infile.beg);
+
+  // How many pages do we need?
+  int pg_count = length + sizeof (int) + PF::kPageSize - 1;
+  pg_count /= PF::kPageSize;
+
+  // Write the input file, page by page.
+  for (int i = 0; i < pg_count; ++i) {
+    auto pg = blob_file.AllocatePage ();
+    auto data = pg.GetData ();
+    int offset = 0;
+    if (i == 0) {
+      *(int*)data = length;
+      offset = sizeof (int);
+    }
+    infile.read (data + offset, PF::kPageSize - offset);
+    blob_file.DoneWritingTo (pg);
+  }
+
+  infile.close ();
+  this->pfm.CloseFile (blob_file);
+  
+  // Return the blob number which will be put inside the record.
+  return blob_number;
+}
+
 void Manager::CreateFile (const char* fileName, int record_size)
 {
   if (fileName == NULL) throw error::BadArgument ();
@@ -105,6 +164,7 @@ FileHandle::FileHandle (PF::FileHandle pf_file_handle)
 
   this->record_size = header.GetRecordSize ();
   this->first_page_num = header.GetFirstPageNum ();
+  this->next_blob_id_available = header.GetNextAvailableBlobId ();
   this->header_modified = false;
 
   this->pf_file_handle.UnpinPage (pf_header);
@@ -125,12 +185,14 @@ RID FileHandle::insert (const char* rec_data)
   // We maintain the invariant that the first page
   // always has space for a new record.
   auto page = this->GetFirstPage ();
+
   SlotNum slot_num = page.insert (rec_data);
   RID rid (this->first_page_num, slot_num);
   if (page.full()) {
     this->MakeNewFirstPage ();
   }
   this->DoneWritingTo (page);
+  this->ForcePages ();
   return rid;
 }
 
@@ -198,6 +260,7 @@ void FileHandle::UpdateHeader ()
 
   auto pf_header = this->pf_file_handle.GetFirstPage ();
   HeaderPage header_page (pf_header);
+  header_page.SetNextAvailableBlobId (this->next_blob_id_available);
   header_page.SetFirstPageNum (this->first_page_num);
   this->pf_file_handle.DoneWritingTo (pf_header);
 
@@ -255,6 +318,7 @@ void Page::clear ()
 {
   this->hdr->num_records = 0;
   this->hdr->next_page = INVALID;
+  this->hdr->next_blob_id_available = 0;
   this->bitmap.clear_all ();
 }
 
@@ -347,6 +411,20 @@ PageNum HeaderPage::GetFirstPageNum () const
   return *(PageNum*) data;
 }
 
+void HeaderPage::SetNextAvailableBlobId (int next_available_blob_id)
+{
+  char *data = this->pf_page.GetData ();
+  data += sizeof (int) + sizeof (int); // page number and record size
+  *(int*) data = next_available_blob_id;
+}
+
+int HeaderPage::GetNextAvailableBlobId () const
+{
+  char *data = this->pf_page.GetData ();
+  data += sizeof (int) + sizeof (int); // page number and record size
+  return *(int*) data;
+}
+
 int HeaderPage::GetRecordSize () const
 {
   return *(int*)(this->pf_page.GetData ());
@@ -374,6 +452,7 @@ void Scan::open (const FileHandle &fileHandle,
       (compOp != NO_OP && value == NULL) ||
       (fileHandle.record_size < attrLength + attrOffset))
     throw error::BadArgument ();
+  
 
   this->file_handle = &fileHandle;
   this->attr_type = attrType;
