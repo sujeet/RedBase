@@ -41,7 +41,17 @@ private:
   RM::Scan scan;
   RM::FileHandle rel;
   RM::Manager* rmm;
+
+  IX::Scan* index_scan;
+  IX::IndexHandle index;
+  IX::Manager* ixm;
+
+  SM::Manager* smm;
+
   const vector<condition> conditions;
+
+  bool using_index_scan;
+  condition index_scan_condition;
 
 public:
   RelIterator (const char* rel_name,

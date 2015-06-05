@@ -8,16 +8,40 @@ RelIterator::RelIterator (const char* rel_name,
                           RM::Manager* rmm,
                           IX::Manager* ixm,
                           SM::Manager* smm)
-  : rmm (rmm), conditions (conditions)
+  : rmm (rmm), ixm (ixm), smm (smm),
+    conditions (conditions), using_index_scan (false)
 {
   this->rel = this->rmm->OpenFile (rel_name);
-  this->scan.open (this->rel, INT, 4, 0, NO_OP, NULL);
   this->tuple_buffer = new char [this->tuple_size ()];
+
+  // Check whether we can use an index scan instead.
+  auto attr_recs = this->smm->GetAttributes (rel_name);
+  this->scan.open (this->rel, INT, 4, 0, NO_OP, NULL); return;
+  for (unsigned int i = 0; i < attr_recs.size(); ++i) {
+    Attribute *attr = (Attribute *) attr_recs[i].data;
+    if (attr->index_num == -1) continue;
+    for (unsigned int j = 0; j < conditions.size(); ++j) {
+      if (conditions [j].offset1 == attr->offset and
+          not conditions [j].has_rhs_attr) {
+        this->index = this->ixm->OpenIndex (rel_name, attr->index_num);
+        this->index_scan_condition = conditions [j];
+        this->index_scan = new IX::Scan (this->index,
+                                         conditions[j].comp_op,
+                                         conditions[j].value);
+        this->using_index_scan = true;
+        return;
+      }
+    }
+  }
 }
 
 RelIterator::~RelIterator ()
 {
-  this->scan.close ();
+  if (not using_index_scan) this->scan.close ();
+  else {
+    delete this->index_scan;
+    this->ixm->CloseIndex (this->index);
+  }
   this->rmm->CloseFile (this->rel);
   delete [] this->tuple_buffer;
 }
@@ -27,8 +51,16 @@ void RelIterator::close () {}
 
 void RelIterator::reset ()
 {
-  this->scan.close ();
-  this->scan.open (this->rel, INT, 4, 0, NO_OP, NULL);
+  if (not using_index_scan) {
+    this->scan.close ();
+    this->scan.open (this->rel, INT, 4, 0, NO_OP, NULL);
+  }
+  else {
+    delete this->index_scan;
+    this->index_scan = new IX::Scan (this->index,
+                                     this->index_scan_condition.comp_op,
+                                     this->index_scan_condition.value);
+  }
 }
 
 RID RelIterator::rid ()
@@ -39,15 +71,33 @@ RID RelIterator::rid ()
 char* RelIterator::next ()
 {
   RM::Record rec;
-  while ((rec = this->scan.next ()) != this->scan.end) {
-    bool match_found = true;
-    for (unsigned int i = 0; i < this->conditions.size (); ++i) {
-      match_found = match_found and this->conditions[i].satisfies (rec.data);
+  if (not using_index_scan) {
+    while ((rec = this->scan.next ()) != this->scan.end) {
+      bool match_found = true;
+      for (unsigned int i = 0; i < this->conditions.size (); ++i) {
+        match_found = match_found and this->conditions[i].satisfies (rec.data);
+      }
+      if (match_found) {
+        memcpy (this->tuple_buffer, rec.data, this->tuple_size ());
+        this->rid_ = rec.rid;
+        return this->tuple_buffer;
+      }
     }
-    if (match_found) {
-      memcpy (this->tuple_buffer, rec.data, this->tuple_size ());
-      this->rid_ = rec.rid;
-      return this->tuple_buffer;
+  }
+  else {
+    RID rid;
+    while ((rid = this->index_scan->next ()) != this->index_scan->end) {
+      cout << rid.page_num << " " << rid.slot_num << endl;
+      bool match_found = true;
+      rec = this->rel.get (rid);
+      for (unsigned int i = 0; i < this->conditions.size (); ++i) {
+        match_found = match_found and this->conditions[i].satisfies (rec.data);
+      }
+      if (match_found) {
+        memcpy (this->tuple_buffer, rec.data, this->tuple_size ());
+        this->rid_ = rec.rid;
+        return this->tuple_buffer;
+      }
     }
   }
   return NULL;
