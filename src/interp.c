@@ -49,6 +49,7 @@ static int mk_relations(NODE *list, int max, char *relations[]);
 static int mk_conditions(NODE *list, int max, Condition conditions[]);
 static int mk_values(NODE *list, int max, Value values[]);
 static void mk_value(NODE *node, Value &value);
+static void mk_value(char *blob_updator, Value &value);
 static void print_error(char *errmsg, RC errval);
 static void echo_query(NODE *n);
 static void print_attrtypes(NODE *n);
@@ -121,6 +122,11 @@ RC interp(NODE *n)
 
          pSmm->Load(n->u.LOAD.relname,
                n->u.LOAD.filename);
+         break;
+
+      case N_LOADLIB:            /* for LoadLib() */
+
+         pSmm->LoadLib(n->u.LOADLIB.libname);
          break;
 
       case N_SET:                    /* for Set() */
@@ -234,13 +240,21 @@ RC interp(NODE *n)
             mk_rel_attr(n->u.UPDATE.relattr, relAttr);
 
             struct node *rhs = n->u.UPDATE.relorvalue;
-            if (rhs->u.RELATTR_OR_VALUE.relattr) {
-               mk_rel_attr(rhs->u.RELATTR_OR_VALUE.relattr, rhsRelAttr);
-               bIsValue = 0;
-            } else {
-               /* Make a value suitable for sending to update */
-               mk_value(rhs->u.RELATTR_OR_VALUE.value, rhsValue);
-               bIsValue = 1;
+            char *blob_updator = n->u.UPDATE.blob_updator;
+
+            if (not blob_updator) {
+              if (rhs->u.RELATTR_OR_VALUE.relattr) {
+                mk_rel_attr(rhs->u.RELATTR_OR_VALUE.relattr, rhsRelAttr);
+                bIsValue = 0;
+              } else {
+                /* Make a value suitable for sending to update */
+                mk_value(rhs->u.RELATTR_OR_VALUE.value, rhsValue);
+                bIsValue = 1;
+              }
+            }
+            else {
+              mk_value(blob_updator, rhsValue);
+              bIsValue = 1;
             }
 
             /* Make a list of Conditions suitable for sending to Update */
@@ -391,16 +405,22 @@ static int mk_conditions(NODE *list, int max, Condition conditions[])
       conditions[i].lhsAttr.attrName = 
          current->u.CONDITION.lhsRelattr->u.RELATTR.attrname;
       conditions[i].op = current->u.CONDITION.op;
-      if (current->u.CONDITION.rhsRelattr) {
-         conditions[i].bRhsIsAttr = TRUE;
-         conditions[i].rhsAttr.relName = 
+      if (not current->u.CONDITION.blob_filter) {
+        if (current->u.CONDITION.rhsRelattr) {
+          conditions[i].bRhsIsAttr = TRUE;
+          conditions[i].rhsAttr.relName = 
             current->u.CONDITION.rhsRelattr->u.RELATTR.relname;
-         conditions[i].rhsAttr.attrName = 
+          conditions[i].rhsAttr.attrName = 
             current->u.CONDITION.rhsRelattr->u.RELATTR.attrname;
+        }
+        else {
+          conditions[i].bRhsIsAttr = FALSE;
+          mk_value(current->u.CONDITION.rhsValue, conditions[i].rhsValue);
+        }
       }
       else {
-         conditions[i].bRhsIsAttr = FALSE;
-         mk_value(current->u.CONDITION.rhsValue, conditions[i].rhsValue);
+        conditions[i].bRhsIsAttr = FALSE;
+        mk_value(current->u.CONDITION.blob_filter, conditions[i].rhsValue);
       }
    }
 
@@ -428,6 +448,12 @@ static int mk_values(NODE *list, int max, Value values[])
    }
 
    return i;
+}
+
+static void mk_value(char *blob_updator, Value &value)
+{
+  value.data = (void *) blob_updator;
+  value.type = BLOB;
 }
 
 /*
@@ -480,6 +506,10 @@ static int parse_format_string(char *format_string, AttrType *type, int *len)
          case 'r':
             *type = FLOAT;
             *len = sizeof(float);
+            break;
+         case 'b':
+            *type = BLOB;
+            *len = sizeof(int);
             break;
          case 's':
          case 'c':
@@ -593,6 +623,10 @@ static void echo_query(NODE *n)
       case N_LOAD:            /* for Load() */
          printf("load %s(\"%s\");\n",
                n -> u.LOAD.relname, n -> u.LOAD.filename);
+         break;
+      case N_LOADLIB:            /* for LoadLib() */
+         printf("loadlib %s;\n",
+               n -> u.LOADLIB.libname);
          break;
       case N_HELP:            /* for Help() */
          printf("help");

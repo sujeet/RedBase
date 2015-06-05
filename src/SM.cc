@@ -13,6 +13,7 @@
 #include <sstream>
 #include <map>
 #include <cstdlib>
+#include <dlfcn.h>
 #include <unistd.h>
 #include "redbase.h"
 #include "SM.h"
@@ -110,7 +111,12 @@ Manager::Manager(IX::Manager &ixm, RM::Manager &rmm)
   : ixm (ixm),
     rmm (rmm) {}
 
-Manager::~Manager() {}
+Manager::~Manager()
+{
+  for (unsigned int i = 0; i < this->libraries.size(); ++i) {
+    dlclose (this->libraries[i]);
+  }
+}
 
 void Manager::OpenDb(const char *dbName)
 {
@@ -532,6 +538,16 @@ void Manager::Load(const char *relName,
   this->rmm.CloseFile (table);
   this->relcat.ForcePages ();
   this->attrcat.ForcePages ();
+}
+
+void Manager::LoadLib(const char *libname)
+{
+  void *handle;
+  handle = dlopen (libname, RTLD_LAZY);
+  if (!handle)
+    throw warn::FailedToLoadLibrary ();
+
+  this->libraries.push_back(handle);
 }
 
 bool rec_comp (const RM::Record& r1, const RM::Record& r2) 

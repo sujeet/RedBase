@@ -82,6 +82,7 @@ QL_Manager *pQlm;          // QL component manager
       RW_TABLE
       RW_INDEX
       RW_LOAD
+      RW_LOADLIB
       RW_SET
       RW_HELP
       RW_PRINT
@@ -132,6 +133,7 @@ QL_Manager *pQlm;          // QL component manager
       droptable
       dropindex
       load
+      loadlib
       set
       help
       print
@@ -218,6 +220,7 @@ dml
 
 utility
    : load
+   | loadlib
    | exit
    | set
    | help
@@ -324,6 +327,12 @@ load
    }
    ;
 
+loadlib
+   : RW_LOADLIB T_STRING
+   {
+      $$ = loadlib_node($2);
+   }
+   ;
 
 set
    : RW_SET T_STRING T_EQ T_QSTRING
@@ -379,6 +388,10 @@ update
    : RW_UPDATE T_STRING RW_SET relattr T_EQ relattr_or_value opt_where_clause
    {
       $$ = update_node($2, $4, $6, $7);
+   }
+   | RW_UPDATE T_STRING RW_SET T_STRING '(' relattr ')' opt_where_clause
+   {
+      $$ = update_node($2, $6, $4, $8);
    }
    ;
 
@@ -474,6 +487,10 @@ condition
    : relattr op relattr_or_value
    {
       $$ = condition_node($1, $2, $3);
+   }
+   | T_STRING '(' relattr ')'
+   {
+      $$ = condition_node($3, $1);
    }
    ;
 

@@ -142,6 +142,14 @@ NODE *load_node(char *relname, char *filename)
     return n;
 }
 
+NODE *loadlib_node(char *libname)
+{
+    NODE *n = newnode(N_LOADLIB);
+
+    n -> u.LOADLIB.libname = libname;
+    return n;
+}
+
 /*
  * set_node: allocates, initializes, and returns a pointer to a new
  * set node having the indicated values.
@@ -235,6 +243,17 @@ NODE *update_node(char *relname, NODE *relattr, NODE *relorvalue,
     return n;
 }
 
+NODE *update_node(char *relname, NODE *relattr, char *blob_updator,
+		  NODE *conditionlist)
+{
+    NODE *n = newnode(N_UPDATE);
+
+    n->u.UPDATE.relname = relname;
+    n->u.UPDATE.relattr = relattr;
+    n->u.UPDATE.blob_updator = blob_updator;
+    n->u.UPDATE.conditionlist = conditionlist;
+    return n;
+}
 
 /*
  * relattr_node: allocates, initializes, and returns a pointer to a new
@@ -263,6 +282,16 @@ NODE *condition_node(NODE *lhsRelattr, CompOp op, NODE *rhsRelattrOrValue)
       rhsRelattrOrValue->u.RELATTR_OR_VALUE.relattr;
     n->u.CONDITION.rhsValue = 
       rhsRelattrOrValue->u.RELATTR_OR_VALUE.value;
+    return n;
+}
+
+NODE *condition_node(NODE *lhsRelattr, char *blob_filter)
+{
+    NODE *n = newnode(N_CONDITION);
+
+    n->u.CONDITION.lhsRelattr = lhsRelattr;
+    n->u.CONDITION.op = EQ_OP;
+    n->u.CONDITION.blob_filter = blob_filter;
     return n;
 }
 

@@ -49,6 +49,7 @@ typedef enum{
     N_DROPTABLE,
     N_DROPINDEX,
     N_LOAD,
+    N_LOADLIB,
     N_SET,
     N_HELP,
     N_PRINT,
@@ -103,6 +104,11 @@ typedef struct node{
          char *filename;
       } LOAD;
 
+      /* loadlib node */
+      struct{
+        char *libname;
+      } LOADLIB;
+      
       /* set node */
       struct{
          char *paramName;
@@ -142,6 +148,7 @@ typedef struct node{
       /* update node */
       struct{
          char *relname;
+         char *blob_updator;
          struct node *relattr;
          struct node *relorvalue;
          struct node *conditionlist;
@@ -157,6 +164,7 @@ typedef struct node{
       /* condition node */
       struct{
          struct node *lhsRelattr;
+         char *blob_filter;
          CompOp op;
          struct node *rhsRelattr;
          struct node *rhsValue;
@@ -205,6 +213,7 @@ NODE *create_index_node(char *relname, char *attrname);
 NODE *drop_index_node(char *relname, char *attrname);
 NODE *drop_table_node(char *relname);
 NODE *load_node(char *relname, char *filename);
+NODE *loadlib_node(char *libname);
 NODE *set_node(char *paramName, char *string);
 NODE *help_node(char *relname);
 NODE *print_node(char *relname);
@@ -213,8 +222,11 @@ NODE *insert_node(char *relname, NODE *valuelist);
 NODE *delete_node(char *relname, NODE *conditionlist);
 NODE *update_node(char *relname, NODE *relattr, NODE *value,
 		  NODE *conditionlist);
+NODE *update_node(char *relname, NODE *relattr, char *blob_updator,
+		  NODE *conditionlist);
 NODE *relattr_node(char *relname, char *attrname);
 NODE *condition_node(NODE *lhsRelattr, CompOp op, NODE *rhsRelattrOrValue);
+NODE *condition_node(NODE *lhsRelattr, char *blob_filter);
 NODE *value_node(AttrType type, void *value);
 NODE *relattr_or_value_node(NODE *relattr, NODE *value);
 NODE *attrtype_node(char *attrname, char *type);

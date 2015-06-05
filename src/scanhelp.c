@@ -94,6 +94,8 @@ static int get_id(char *s)
       return yylval.ival = RW_INDEX;
    if(!strcmp(string, "load"))
       return yylval.ival = RW_LOAD;
+   if(!strcmp(string, "loadlib"))
+      return yylval.ival = RW_LOADLIB;
    if(!strcmp(string, "help"))
       return yylval.ival = RW_HELP;
    if(!strcmp(string, "exit"))

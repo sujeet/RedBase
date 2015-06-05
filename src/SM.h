@@ -64,6 +64,7 @@ private:
   RM::Manager rmm;
   RM::FileHandle relcat;
   RM::FileHandle attrcat;
+  vector<void*> libraries;
 
 public:
   Manager    (IX::Manager &ixm, RM::Manager &rmm);
@@ -90,6 +91,7 @@ public:
                    RID rid);
   void Load       (const char *relName,           // load relName from
                    const char *fileName);         //   fileName
+  void LoadLib    (const char *libname);          // load library named libname
   void Help       ();                             // Print relations in db
   void Help       (const char *relName);          // print schema of relName
 
@@ -139,6 +141,7 @@ DECLARE_WARNING (AttrDoesNotExist, "Attribute doesn't exist.");
 DECLARE_WARNING (IndexAlreadyExists, "Index already exists.");
 DECLARE_WARNING (IndexDoesNotExist, "Index desn't exist.");
 DECLARE_WARNING (BadCSVFile, "Error opening CSV file.");
+DECLARE_WARNING (FailedToLoadLibrary, "Error loading .so file.");
 }  // namespace warning
 
 }  // namespace SM

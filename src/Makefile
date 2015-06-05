@@ -68,7 +68,7 @@ UTILS          = $(UTILS_SOURCES:.cc=)
 TESTS          = $(TESTER_SOURCES:.cc=)
 EXECUTABLES    = $(UTILS) $(TESTS)
 
-LIBS           = -lparser -lql -lsm -lix -lrm -lpf
+LIBS           = -lparser -lql -lsm -lix -lrm -lpf -ldl
 
 #
 # Build targets
