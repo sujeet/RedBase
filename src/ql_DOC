@@ -1,0 +1,46 @@
+Name:  Sujeet Gholap
+Email: sujeet@cs.stanford.edu
+
+
+Overall design
+--------------
+  Scans and joins are implemented using iterators.
+iterators.cc and iterators.h contain the iterator details.
+There are two kinds of iterators:
+ - composite iterators
+ - iterators over relations
+
+A join is simply a composition of two iterators, with additional
+filter conditions.
+
+
+Query planning
+--------------
+- Filters are pushed all the way down to the scans.
+- If there exists a filter on an indexed attribute,
+  an IX scan is used instead of an RM scan.
+  (as can be seen in iterators.cc)
+- The conditions for conditional joins are pushed as deep
+  toward the scans as possible.
+
+
+Simplifications
+---------------
+- There is no project operation.
+- Projection is taken care of just before printing
+  by manipulating the header.
+
+
+Difficulties / challenges
+-------------------------
+- I couldn't get all the tests to pass :( :(
+- Worst, when I run them manually on my machine, they pass,
+  but when I submit, they don't.
+
+
+Testing
+-------
+- As QL part was more about interacting with an interpreter,
+  and hardly about the API, I manually tested using the REPL.
+- In addition, I used the tests in the shared folder under
+  class directory.
