@@ -1,0 +1,103 @@
+Name: Sujeet Gholap
+SUID: sujeet
+email: sujeet@cs.stanford.edu
+
+# A statement of the general functionality of the proposed extension.
+- The plan is to add support for blob objects in order to support
+  storing of files.
+
+
+# Components that need modification:
+- RM part: The records need to support one more additional data type.
+- SM part: A load commad to load user-defined blob operations.
+- parser: SET clause of UPDATE queries need to support additional syntax
+          for functions that act on blob objects.
+
+
+# A description of the overall system design of the extension
+  including how the extension fits into the rest of RedBase.
+- The extension adds a new type of column, so, it can be considered as
+  an extension to the type system.
+- We extpose an object-oriented Blob API using which users
+  create their own blob manipulators and libraries.
+
+
+class Blob
+{
+public:
+  Blob (int blob_id);
+
+  // Reads num_bytes bytes starting at offset
+  // from the blob into the dest buffer
+  // returns the number of bytes actually read.
+  int read (void* dest, int num_bytes, int offset) const;
+
+  // Writes num_bytes from src to the blob starting at offset.
+  // Returns the number of bytes actually written.
+  // This extends the blob if necessary.
+  int write (const void* src, int num_bytes, int offset);
+
+  // Returns the size of blob in bytes.
+  int size () const;
+
+  // Truncates the blob to given size.
+  void truncate (int new_size);
+};
+
+// The following type of functions would be supported
+// as external libraries (dynatically loaded).
+// Users can provide these functions and then use them in queries.
+
+bool filter_func_name (const Blob& blob);
+void updater_func_name (Blob& blob);
+
+/* Use cases:
+   
+   Insertion:
+   Insert Into relName Values (V1, V2, …, Vn);
+   
+   if Ak is of type blob, then Vk should be a string: a valid filepath.
+   the entire file will be stored as a blob.
+
+   Update:
+   Update relName
+   Set attrName = AV, updater_func (attrName2)
+   [Where A1 comp1 AV1 And A2 comp2 AV2 And … And Ak compk AVk];
+
+   if attrName is a blob, AV has to be a filepath. this will set the blob
+   field to store contents of the newly specified file.
+   updater_func will be a user-supplied library function that modifies the
+   blob object with the Blob api provided above in-place.
+
+   if Ak is of type blob, in the where clause, the only comparison operator
+   that is supported is equality and AVk has to be a user-supplied filter
+   function.
+*/
+
+// Here is a concrete example of Storing essays as blob objects.
+
+// The library my_text_file_handlers.so
+// defines the following handlers,
+// later to be used in the queries.
+
+// Returns true if the blob is more than 5000 bytes
+bool too_long (const Blob& blob);
+
+// truncates the blob to 5000 bytes.
+void truncate_to_5000 (Blob& blob);
+
+/*
+  CREATE TABLE essays(username c24, essay blob);
+  INSERT INTO essays VALUES ("sujeet", "/var/usr/sujeet/essay.txt");
+  INSERT INTO essays VALUES ("gholap", "/var/usr/gholap/plan.txt");
+
+  LOAD (my_text_file_handlers.so);
+
+  UPDATE essays
+  SET essay = "/home/sujeet/better_essay.txt"
+  WHERE username = "sujeet";
+
+  UPDATE essays
+  SET truncate_to_5000 (essay)
+  WHERE essay = too_long;
+*/
