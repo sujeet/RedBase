@@ -52,6 +52,7 @@ private:
 
   bool using_index_scan;
   condition index_scan_condition;
+  const char* rel_name;
 
 public:
   RelIterator (const char* rel_name,

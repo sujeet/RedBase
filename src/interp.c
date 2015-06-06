@@ -771,12 +771,19 @@ static void print_value(NODE *n)
 
 static void print_condition(NODE *n)
 {
-   print_relattr(n->u.CONDITION.lhsRelattr);
-   print_op(n->u.CONDITION.op);
-   if (n->u.CONDITION.rhsRelattr)
+  if (not n->u.CONDITION.blob_filter) {
+    print_relattr(n->u.CONDITION.lhsRelattr);
+    print_op(n->u.CONDITION.op);
+    if (n->u.CONDITION.rhsRelattr)
       print_relattr(n->u.CONDITION.rhsRelattr);
-   else
+    else
       print_value(n->u.CONDITION.rhsValue);
+  }
+  else {
+    printf ("%s(", n->u.CONDITION.blob_filter);
+    print_relattr(n->u.CONDITION.lhsRelattr);
+    printf (" )");
+  }
 }
 
 static void print_relattrs(NODE *n)

@@ -589,7 +589,6 @@ RC QL_Manager::Update(const char *relName,
           bool updated = false;
           updated = true;
           for (unsigned int i = 0; i < this->smm->libraries.size(); ++i) {
-            cout << "trying to load " << val.c_str() << endl;
             dlerror();
             *(void **)(&updator) = dlsym (this->smm->libraries[i], val.c_str());
             char* error;
@@ -600,9 +599,8 @@ RC QL_Manager::Update(const char *relName,
                 relName,
                 *blob_id
               );
-              cout << "calling updator" << endl;
               // textprint(b);
-              (*updators["textprint"])(b);
+              // (*updators["textprint"])(b);
               updated = true;
             }
           }

@@ -9,7 +9,8 @@ RelIterator::RelIterator (const char* rel_name,
                           IX::Manager* ixm,
                           SM::Manager* smm)
   : rmm (rmm), ixm (ixm), smm (smm),
-    conditions (conditions), using_index_scan (false)
+    conditions (conditions), using_index_scan (false),
+    rel_name (rel_name)
 {
   this->rel = this->rmm->OpenFile (rel_name);
   this->tuple_buffer = new char [this->tuple_size ()];
@@ -68,6 +69,12 @@ RID RelIterator::rid ()
   return this->rid_;
 }
 
+
+bool is_long (const Blob& blob)
+{
+  return blob.size() > 1000;
+}
+
 char* RelIterator::next ()
 {
   RM::Record rec;
@@ -75,7 +82,13 @@ char* RelIterator::next ()
     while ((rec = this->scan.next ()) != this->scan.end) {
       bool match_found = true;
       for (unsigned int i = 0; i < this->conditions.size (); ++i) {
-        match_found = match_found and this->conditions[i].satisfies (rec.data);
+        if (conditions[i].attr_type != BLOB)
+          match_found = match_found and this->conditions[i].satisfies (rec.data);
+        else {
+          int blob_id = *(int*)(rec.data + conditions[i].offset1);
+          Blob b = this->rmm->GetBlob (this->rel_name, blob_id);
+          match_found = match_found and is_long (b);
+        }
       }
       if (match_found) {
         memcpy (this->tuple_buffer, rec.data, this->tuple_size ());

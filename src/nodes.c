@@ -295,6 +295,8 @@ NODE *condition_node(NODE *lhsRelattr, char *blob_filter)
     n->u.CONDITION.lhsRelattr = lhsRelattr;
     n->u.CONDITION.op = EQ_OP;
     n->u.CONDITION.blob_filter = blob_filter;
+    n->u.CONDITION.rhsRelattr = NULL;
+    n->u.CONDITION.rhsValue = NULL;
     return n;
 }
 
